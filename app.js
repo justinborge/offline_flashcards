@@ -27,6 +27,7 @@ const easyButton = document.getElementById('easy-button');
 
 // --- TUTORIAL MODAL ELEMENTS ---
 const tutorialLink = document.getElementById('tutorial-link');
+const sampleLink = document.getElementById('sample-link');
 const tutorialModal = document.getElementById('tutorial-modal');
 const modalCloseButton = document.querySelector('.modal-close-button');
 const tutorialImage = document.getElementById('tutorial-image');
@@ -432,6 +433,22 @@ tutorialLink.addEventListener('click', openTutorial);
 modalCloseButton.addEventListener('click', closeTutorial);
 prevArrow.addEventListener('click', () => changeSlide(-1));
 nextArrow.addEventListener('click', () => changeSlide(1));
+// --- NEW: Event Listener for the Sample Link ---
+sampleLink.addEventListener('click', (event) => {
+    event.preventDefault(); // Prevents any default button/link behavior
+    
+    const sampleUrl = 'https://docs.google.com/spreadsheets/d/17wqT4DfH00by-1arvbCf1UeGjeWhC-YOzhDOwYMjna8/edit?gid=2137664473#gid=2137664473';
+    
+    urlInput.value = sampleUrl; // Fill the input field
+    
+    // Add the highlight class for the flash effect
+    urlInput.classList.add('is-highlighted');
+    
+    // Remove the class after the animation is done (1500ms = 1.5s)
+    setTimeout(() => {
+        urlInput.classList.remove('is-highlighted');
+    }, 1500);
+});
 tutorialModal.addEventListener('click', (event) => { if (event.target === tutorialModal) closeTutorial(); });
 
 document.addEventListener('keydown', (event) => {

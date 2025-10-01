@@ -460,3 +460,21 @@ button:active {
         display: block;
     }
 }
+
+/* --- NEW: Highlight Animation for Sample Link --- */
+.is-highlighted {
+    animation: flash-border 1.5s 1;
+}
+
+@keyframes flash-border {
+    0%   {
+        border-color: #115895;
+        box-shadow: 0 0 0 3px rgba(17, 88, 149, 0.3);
+        background-color: #DEE2E6;
+    }
+    100% {
+        border-color: var(--color-border);
+        box-shadow: none;
+        background-color: var(--color-surface);
+    }
+}
