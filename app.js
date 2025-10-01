@@ -1,3 +1,40 @@
+// --- CSV PARSING HELPER FUNCTION ---
+// This function reliably parses a single row from a CSV file,
+// correctly handling commas and double-quotes inside the text.
+function parseCsvRow(row) {
+    const columns = [];
+    let currentColumn = '';
+    let inQuotes = false;
+    for (let i = 0; i < row.length; i++) {
+        const char = row[i];
+        if (char === '"') {
+            if (inQuotes && row[i + 1] === '"') {
+                // This is an escaped quote (""), so add a single quote to the column
+                currentColumn += '"';
+                i++; // Skip the next quote character
+            } else {
+                // This is a starting or ending quote
+                inQuotes = !inQuotes;
+            }
+        } else if (char === ',' && !inQuotes) {
+            // This is a column separator, so finalize the current column and start a new one
+            columns.push(currentColumn);
+            currentColumn = '';
+        } else {
+            // This is a regular character, add it to the current column
+            currentColumn += char;
+        }
+    }
+    // Add the final column to the list
+    columns.push(currentColumn);
+    return columns;
+}
+
+// --- DOM ELEMENTS ---
+const setupScreen = document.getElementById('setup-screen');
+const mainApp = document.getElementById('main-app');
+...
+
 // --- DOM ELEMENTS ---
 const setupScreen = document.getElementById('setup-screen');
 const mainApp = document.getElementById('main-app');
@@ -212,35 +249,15 @@ async function loadCardData(url, deckName = null) {
 
         // 1. Load cards into our permanent fullDeck using the potentially sliced dataRows
         fullDeck = dataRows.map(row => {
-            // This robust parser handles both commas and double quotes inside your flashcard text.
-            const columns = [];
-            // This regex finds either a quoted field (handling escaped "") or an unquoted field.
-            const regex = /(?:"([^"]*(?:""[^"]*)*)"|([^,]*))(?:,|$)/g;
-            let match;
+            // Use our new, robust parser function to split the row into columns.
+            const columns = parseCsvRow(row);
             
-            // This loop extracts columns one by one from the row string.
-            while (match = regex.exec(row)) {
-                // Stop if we hit the end of the row to prevent adding an empty column.
-                if (match.index === row.length && match[0] === '') {
-                    break;
-                }
-                
-                // The regex captures quoted content in group 1, unquoted in group 2.
-                let col = match[1] !== undefined ? match[1] : match[2];
-                
-                // If the column was quoted, we must un-escape any internal double quotes ("" -> ").
-                if (match[1] !== undefined && col) {
-                    col = col.replace(/""/g, '"');
-                }
-                columns.push(col);
-            }
-
             if (columns.length >= 2) {
-                const portuguese = (columns[0] || '').trim();
-                const english = (columns[1] || '').trim();
+                const portuguese = columns[0].trim();
+                const english = columns[1].trim();
                 return { portuguese, english };
             }
-            return null; // Handle potentially empty rows
+            return null; // Handle potentially empty or malformed rows
         }).filter(card => card && card.portuguese && card.english);
 
 
