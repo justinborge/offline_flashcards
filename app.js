@@ -15,6 +15,15 @@ const knewItButton = document.getElementById('knew-it-button');
 // New restart button element
 const restartLessonButton = document.getElementById('restart-lesson-button');
 
+// --- TUTORIAL MODAL ELEMENTS ---
+const tutorialLink = document.getElementById('tutorial-link');
+const tutorialModal = document.getElementById('tutorial-modal');
+const modalCloseButton = document.querySelector('.modal-close-button');
+const tutorialImage = document.getElementById('tutorial-image');
+const prevArrow = document.querySelector('.modal-arrow.prev');
+const nextArrow = document.querySelector('.modal-arrow.next');
+const slideCounter = document.getElementById('slide-counter');
+
 
 // --- APP STATE ---
 // fullDeck holds the master copy of all cards for the current lesson
@@ -62,6 +71,17 @@ function transformGoogleSheetUrl(url) {
 // sessionDeck holds the cards for the current study session
 let sessionDeck = [];
 let currentCard = null;
+
+// --- TUTORIAL STATE ---
+const tutorialImages = [
+    'assets/tutorial-1.png',
+    'assets/tutorial-2.png',
+    'assets/tutorial-3.png',
+    'assets/tutorial-4.png',
+    'assets/tutorial-5.png',
+    'assets/tutorial-6.png'
+];
+let currentSlideIndex = 0;
 
 // --- FUNCTIONS ---
 function showMainApp() {
@@ -135,42 +155,74 @@ function startLesson() {
     showNextCard();
 }
 
-// UPDATED: Now uses fullDeck and the startLesson function
 async function loadCardData(url, deckName = null) {
     cardFrontText.textContent = "Loading...";
     restartLessonButton.style.display = 'none';
-    
+
     // Transform the user-friendly URL to a direct CSV link
     const csvUrl = transformGoogleSheetUrl(url);
 
     try {
         const response = await fetch(csvUrl);
         const csvText = await response.text();
-        
-        // 1. Load cards into our permanent fullDeck
-        fullDeck = csvText.split('\n').slice(1).map(row => {
+        const rows = csvText.trim().split('\n');
+
+        // --- NEW: More Robust Header Detection ---
+        let dataRows = rows; // Assume there is no header by default
+        if (rows.length > 0) {
+            // Function to remove accents/diacritics for easier matching
+            const normalizeText = (text) => {
+                return text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            };
+            
+            const firstRow = normalizeText(rows[0]);
+
+            // Expanded list of keywords in English and Portuguese
+            const headerKeywords = [
+                'english', 'portugues', // Note: 'português' will become 'portugues'
+                'front', 'frente',
+                'back', 'verso',
+                'term', 'palavra',
+                'definition', 'traducao' // 'tradução' will become 'traducao'
+            ];
+
+            // Check if the normalized first row contains any common header words
+            const hasHeader = headerKeywords.some(keyword => firstRow.includes(keyword));
+            
+            if (hasHeader) {
+                console.log("Header detected, skipping first row.");
+                dataRows = rows.slice(1); // If header is found, skip the first row
+            } else {
+                console.log("No header detected, including all rows.");
+            }
+        }
+        // --- END: More Robust Header Detection ---
+
+        // 1. Load cards into our permanent fullDeck using the potentially sliced dataRows
+        fullDeck = dataRows.map(row => {
             const columns = row.split(',');
             if (columns.length >= 2) {
-                return { portuguese: columns[0].trim(), english: columns[1].trim() };
+                const portuguese = columns[0].trim().replace(/^"|"$/g, '');
+                const english = columns[1].trim().replace(/^"|"$/g, '');
+                return { portuguese, english };
             }
             return null; // Handle potentially empty rows
         }).filter(card => card && card.portuguese && card.english);
+
 
         if (fullDeck.length === 0) throw new Error("No cards found in the sheet.");
 
         // 2. Save the deck to our recent list
         let nameToSave = deckName;
         if (!nameToSave) {
-            // If it's a new deck, ask the user for a name
             nameToSave = prompt("What would you like to name this deck?", "My Portuguese Deck");
         }
-        // Only save if the user provides a name
         if (nameToSave) {
-            saveRecentDeck(nameToSave, url); // Save the original share URL, not the csv one
+            saveRecentDeck(nameToSave, url);
         }
 
         // 3. Start the lesson
-        startLesson(); 
+        startLesson();
     } catch (error) {
         console.error('Error loading card data:', error);
         alert("Could not load cards. Please check the URL and share settings.");
@@ -235,6 +287,82 @@ recentDecksContainer.addEventListener('click', (event) => {
         }
     }
 });
+
+// --- TUTORIAL MODAL LOGIC ---
+function showSlide(index) {
+    if (index >= tutorialImages.length) {
+        currentSlideIndex = 0;
+    } else if (index < 0) {
+        currentSlideIndex = tutorialImages.length - 1;
+    } else {
+        currentSlideIndex = index;
+    }
+    tutorialImage.src = tutorialImages[currentSlideIndex];
+    slideCounter.textContent = `${currentSlideIndex + 1} / ${tutorialImages.length}`;
+}
+
+function changeSlide(direction) {
+    showSlide(currentSlideIndex + direction);
+}
+
+function openTutorial() {
+    showSlide(0); // Start at the first slide
+    tutorialModal.style.display = 'flex';
+}
+
+function closeTutorial() {
+    tutorialModal.style.display = 'none';
+}
+
+tutorialLink.addEventListener('click', openTutorial);
+modalCloseButton.addEventListener('click', closeTutorial);
+prevArrow.addEventListener('click', () => changeSlide(-1));
+nextArrow.addEventListener('click', () => changeSlide(1));
+
+// Close modal if user clicks on the dark background overlay
+tutorialModal.addEventListener('click', (event) => {
+    if (event.target === tutorialModal) {
+        closeTutorial();
+    }
+});
+
+// Add keyboard navigation (left/right arrows)
+document.addEventListener('keydown', (event) => {
+    if (tutorialModal.style.display === 'flex') {
+        if (event.key === 'ArrowLeft') {
+            changeSlide(-1);
+        } else if (event.key === 'ArrowRight') {
+            changeSlide(1);
+        } else if (event.key === 'Escape') {
+            closeTutorial();
+        }
+    }
+});
+
+// Swipe functionality for mobile
+let touchStartX = 0;
+let touchEndX = 0;
+
+tutorialModal.addEventListener('touchstart', (event) => {
+    touchStartX = event.changedTouches[0].screenX;
+}, { passive: true });
+
+tutorialModal.addEventListener('touchend', (event) => {
+    touchEndX = event.changedTouches[0].screenX;
+    handleSwipe();
+});
+
+function handleSwipe() {
+    const swipeThreshold = 50; // Minimum distance for a swipe
+    if (touchEndX < touchStartX - swipeThreshold) {
+        // Swiped left
+        changeSlide(1);
+    }
+    if (touchEndX > touchStartX + swipeThreshold) {
+        // Swiped right
+        changeSlide(-1);
+    }
+}
 
 // --- PWA Service Worker Registration ---
 if ('serviceWorker' in navigator) {

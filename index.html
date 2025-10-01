@@ -6,31 +6,39 @@
     <title>Viajo Flashcards</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wght@8..144,400;8..144,700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wght@8..144,100..900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon-192x192.png">
 </head>
 <body>
 
-    <div id="setup-screen" class="setup-container">
+   <div id="setup-screen" class="setup-container">
         <a href="https://getviajo.com" target="_blank">
             <img src="assets/logo-wordmark.png" alt="Viajo Logo" class="welcome-logo">
         </a>
-        <a href="https://getviajo.com" target="_blank" class="viajo-link powered-by">Powered by getviajo.com</a>
 
-        <p>To get started, copy the "Share" link from your Google Sheet and paste it below.</p>
-        <input type="text" id="sheet-url-input" placeholder="Paste your Google Sheet share link here">
+        <h1>Offline Flashcards</h1>
+        
+        <div class="tutorial-prompt">
+            <button id="tutorial-link" class="link-button-inline">View Tutorial</button>
+        </div>
+
+        <input type="text" id="sheet-url-input" placeholder="Paste your Google Sheet share link here" style="text-align:center;">
+        
+        <p class="share-notice">(Be sure it's set to 'anyone with the link can view')</p>
+        
         <button id="load-deck-button">Load Deck</button>
-        <p class="share-notice">(be sure it's set to 'anyone with the link can view')</p>
 
         <div id="recent-decks-container">
-            </div>
-    </div>
+        </div>
+</div>
 
     <div id="main-app" style="display: none;">
         <header class="app-header">
-            <img src="assets/logo-wordmark.png" alt="Viajo Logo" class="header-logo">
+            <a href="https://getviajo.com" target="_blank" rel="noopener noreferrer">
+                <img src="assets/logo-wordmark.png" alt="Viajo Logo" class="header-logo">
+            </a>
         </header>
 
         <div class="card-container" id="card-container">
@@ -52,6 +60,18 @@
         <button id="restart-lesson-button" style="display: none;">🔄 Restart Lesson</button>
 
         <button id="change-deck-button" class="link-button">Change Deck</button>
+    </div>
+
+    <div id="tutorial-modal" class="modal-overlay">
+        <div class="modal-content">
+            <span class="modal-close-button">&times;</span>
+            <div class="modal-slides-container">
+                <img src="" id="tutorial-image" alt="Tutorial Screenshot">
+            </div>
+            <a class="modal-arrow prev">&#10094;</a>
+            <a class="modal-arrow next">&#10095;</a>
+            <div id="slide-counter"></div>
+        </div>
     </div>
 
     <script src="app.js"></script>
