@@ -61,24 +61,23 @@ function renderRecentDecks() {
 
 // --- URL TRANSFORMATION ---
 function transformGoogleSheetUrl(url) {
-    // This new regex looks for both the spreadsheet ID and the specific tab ID (gid)
-    const match = url.match(/spreadsheets\/d\/([a-zA-Z0-9-_]+)(?:[^\/]*\/edit.*)?(?:[#&]gid=([0-9]+))?/);
+    // First, try to find a URL that includes a specific tab ID ('gid')
+    let match = url.match(/spreadsheets\/d\/([a-zA-Z0-9-_]+).*[#&?]gid=([0-9]+)/);
 
-    if (match && match[1]) {
+    if (match && match[1] && match[2]) {
         const spreadsheetId = match[1];
-        const gid = match[2]; // This is the specific tab's ID
-
-        let exportUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=csv`;
-
-        // If a gid (tab ID) was found in the URL, add it to the export link
-        if (gid) {
-            exportUrl += `&gid=${gid}`;
-        }
-
-        return exportUrl;
+        const gid = match[2];
+        return `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=csv&gid=${gid}`;
     }
 
-    // If it doesn't match, maybe it's already a correct export URL.
+    // If no specific tab ID is found, fall back to the original logic (gets the first sheet)
+    match = url.match(/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+    if (match && match[1]) {
+        const spreadsheetId = match[1];
+        return `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=csv`;
+    }
+
+    // If it's not a recognizable Google Sheet URL, return it as is.
     return url;
 }
 // sessionDeck holds the cards for the current study session
