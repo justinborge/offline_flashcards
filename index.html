@@ -41,42 +41,57 @@
             color: #d9534f;
         }
 
-        /* --- NEW MODERN BUTTON STYLES --- */
+        /* --- NEW LAYOUT & MODERN BUTTON STYLES --- */
+
+        /* Reshapes the flashcard to be wider */
+        .card-container {
+            width: 100%;
+            max-width: 500px;
+            aspect-ratio: 5 / 3; /* Classic index card ratio (wider than tall) */
+            margin-bottom: 24px; /* More space between card and buttons */
+        }
+
+        /* Styles the new single-row button layout */
+        .button-container {
+            display: flex;
+            justify-content: center; /* Aligns buttons to the center */
+            width: 100%;
+            gap: 10px; /* Adds space between buttons */
+        }
         
-        /* Base styles for all three action buttons */
-        #hard-button, #medium-button, #easy-button {
+        /* Base styles for the three action buttons */
+        #easy-button, #medium-button, #hard-button {
             color: white;
             border: none;
-            padding: 12px 15px;
+            padding: 10px 25px; /* Slimmer padding */
             font-size: 16px;
             font-weight: 600;
             border-radius: 8px;
             cursor: pointer;
-            flex-grow: 1;
-            margin: 0 5px;
+            flex-grow: 0; /* Prevents buttons from stretching */
             transition: all 0.2s ease-in-out;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         }
 
         /* Hover and active states for a responsive feel */
-        #hard-button:hover, #medium-button:hover, #easy-button:hover {
+        #easy-button:hover, #medium-button:hover, #hard-button:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
         }
-         #hard-button:active, #medium-button:active, #easy-button:active {
+         #easy-button:active, #medium-button:active, #hard-button:active {
             transform: translateY(0);
              box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         }
 
-        /* Specific colors from your request */
-        #hard-button {
-            background-color: #DC4A0B; /* Orange */
-        }
-        #medium-button {
-            background-color: #198799; /* Teal */
-        }
+        /* Your new color scheme */
         #easy-button {
             background-color: #105994; /* Dark Blue */
+        }
+        #medium-button {
+            background-color: #DC4A0B; /* Orange */
+        }
+        #hard-button {
+            background-color: #198799; /* Teal */
         }
     </style>
 </head>
@@ -120,9 +135,9 @@
         </div>
         
         <div class="button-container">
-            <button id="hard-button" class="button-no">Hard</button>
-            <button id="medium-button" class="button-medium">Medium</button>
-            <button id="easy-button" class="button-yes">Easy</button>
+            <button id="easy-button">Easy</button>
+            <button id="medium-button">Medium</button>
+            <button id="hard-button">Hard</button>
         </div>
 
         <button id="restart-lesson-button" style="display: none;">🔄 Restart Lesson</button>
