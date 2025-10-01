@@ -158,7 +158,7 @@ function handleAnswer(level) {
             // 3. Clean up the class so the next card appears normally
             cardContainer.classList.remove('swiped-away');
             showNextCard();
-        }, 300); // This duration MUST match the animation duration in the CSS
+        }, 200); // This duration MUST match the animation duration in the CSS
     } else {
         // For "medium" and "hard", the logic is the same as before
         if (level === 'medium') {
