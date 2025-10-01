@@ -3,16 +3,24 @@ const setupScreen = document.getElementById('setup-screen');
 const mainApp = document.getElementById('main-app');
 const recentDecksContainer = document.getElementById('recent-decks-container');
 const urlInput = document.getElementById('sheet-url-input');
-const loadDeckButton = document.getElementById('load-deck-button');
 const changeDeckButton = document.getElementById('change-deck-button');
-
 const cardContainer = document.getElementById('card-container');
-const flashcard = document.getElementById('flashcard');
-const cardFrontText = document.getElementById('card-front-text');
-const cardBackText = document.getElementById('card-back-text');
 const restartLessonButton = document.getElementById('restart-lesson-button');
+const nameDeckModal = document.getElementById('name-deck-modal');
+const deckNameInput = document.getElementById('deck-name-input');
+const confirmDeckNameBtn = document.getElementById('confirm-deck-name-btn');
+const cancelDeckNameBtn = document.getElementById('cancel-deck-name-btn');
+const deckLoadForm = document.getElementById('deck-load-form');
 
-// New three-button system elements
+// Elements for the two-card system
+const cardA = document.getElementById('flashcard-a');
+const cardB = document.getElementById('flashcard-b');
+const cardFrontTextA = document.getElementById('card-front-text-a');
+const cardBackTextA = document.getElementById('card-back-text-a');
+const cardFrontTextB = document.getElementById('card-front-text-b');
+const cardBackTextB = document.getElementById('card-back-text-b');
+
+// Button elements
 const hardButton = document.getElementById('hard-button');
 const mediumButton = document.getElementById('medium-button');
 const easyButton = document.getElementById('easy-button');
@@ -26,13 +34,15 @@ const prevArrow = document.querySelector('.modal-arrow.prev');
 const nextArrow = document.querySelector('.modal-arrow.next');
 const slideCounter = document.getElementById('slide-counter');
 
-
 // --- APP STATE ---
 let fullDeck = [];
 let sessionDeck = [];
-let currentCard = null;
+let currentCardData = null; // The data object for the active card
+let activeCardElement = null; // The DOM element for the active card
+let nextCardElement = null; // The DOM element for the card in the back
+let isAnimating = false; // Prevents fast multi-clicks during animation
 
-// --- RECENT DECKS LOGIC ---
+// --- RECENT DECKS LOGIC (Unchanged) ---
 function getRecentDecks() {
     return JSON.parse(localStorage.getItem('recentDecks')) || [];
 }
@@ -66,45 +76,22 @@ function deleteRecentDeck(urlToDelete) {
     renderRecentDecks();
 }
 
-// --- URL TRANSFORMATION ---
+// --- URL TRANSFORMATION (Unchanged) ---
 function transformGoogleSheetUrl(url) {
     let match = url.match(/spreadsheets\/d\/([a-zA-Z0-9-_]+).*[#&?]gid=([0-9]+)/);
-
-    if (match && match[1] && match[2]) {
-        const spreadsheetId = match[1];
-        const gid = match[2];
-        return `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=tsv&gid=${gid}`;
-    }
-
+    if (match && match[1] && match[2]) return `https://docs.google.com/spreadsheets/d/${match[1]}/export?format=tsv&gid=${match[2]}`;
     match = url.match(/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
-    if (match && match[1]) {
-        const spreadsheetId = match[1];
-        return `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=tsv`;
-    }
-
+    if (match && match[1]) return `https://docs.google.com/spreadsheets/d/${match[1]}/export?format=tsv`;
     return url;
 }
 
-// --- TUTORIAL STATE ---
-const tutorialImages = [
-    'assets/tutorial-1.png',
-    'assets/tutorial-2.png',
-    'assets/tutorial-3.png',
-    'assets/tutorial-4.png',
-    'assets/tutorial-5.png',
-    'assets/tutorial-6.png'
-];
-let currentSlideIndex = 0;
-
-// --- FUNCTIONS ---
+// --- CORE APP LOGIC ---
 function showMainApp() {
     setupScreen.style.display = 'none';
     mainApp.style.display = 'flex';
-    mainApp.style.flexDirection = 'column';
-    mainApp.style.alignItems = 'center';
-    hardButton.style.display = '';
-    mediumButton.style.display = '';
-    easyButton.style.display = '';
+    hardButton.style.display = 'block';
+    mediumButton.style.display = 'block';
+    easyButton.style.display = 'block';
 }
 
 function showSetupScreen() {
@@ -119,71 +106,157 @@ function shuffleArray(array) {
     }
 }
 
-function displayCard(card) {
-    currentCard = card;
-    cardFrontText.textContent = card.english;
-    cardBackText.textContent = card.portuguese;
-    flashcard.classList.remove('is-flipped');
-}
+// Helper to put card data into a card element
+function populateCard(cardElement, cardData) {
+    if (!cardElement) return;
+    const isCardA = cardElement.id === 'flashcard-a';
+    const frontText = isCardA ? cardFrontTextA : cardFrontTextB;
+    const backText = isCardA ? cardBackTextA : cardBackTextB;
 
-function showNextCard() {
-    cardContainer.classList.add('hiding');
-    setTimeout(() => {
-        if (sessionDeck.length > 0) {
-            const nextCard = sessionDeck.shift();
-            displayCard(nextCard);
-        } else {
-            currentCard = null;
-            cardFrontText.textContent = "Parabéns! 🎉";
-            cardBackText.textContent = "You've learned all the cards!";
-            hardButton.style.display = 'none';
-            mediumButton.style.display = 'none';
-            easyButton.style.display = 'none';
-            restartLessonButton.style.display = 'block';
-        }
-        cardContainer.classList.remove('hiding');
-    }, 200);
-}
-
-// Updated answer logic with "swipe away" animation
-function handleAnswer(level) {
-    if (!currentCard) return;
-
-    if (level === 'easy') {
-        // 1. Add the CSS class to trigger the swipe animation
-        cardContainer.classList.add('swiped-away');
-        
-        // 2. Wait for the animation to finish (300ms) before showing the next card
-        setTimeout(() => {
-            // 3. Clean up the class so the next card appears normally
-            cardContainer.classList.remove('swiped-away');
-            showNextCard();
-        }, 200); // This duration MUST match the animation duration in the CSS
+    if (cardData) {
+        frontText.textContent = cardData.english;
+        backText.textContent = cardData.portuguese;
+        cardElement.style.display = 'block';
     } else {
-        // For "medium" and "hard", the logic is the same as before
-        if (level === 'medium') {
-            sessionDeck.push(currentCard);
-        } else if (level === 'hard') {
-            const insertIndex = Math.min(sessionDeck.length, 3);
-            sessionDeck.splice(insertIndex, 0, currentCard);
-        }
-        // Use the default fade-out transition for these buttons
-        showNextCard();
+        cardElement.style.display = 'none';
     }
 }
 
+// Shows the completion screen
+function showCompletionScreen() {
+    currentCardData = null; // No active card
+    const frontText = activeCardElement.id === 'flashcard-a' ? cardFrontTextA : cardFrontTextB;
+    const backText = activeCardElement.id === 'flashcard-a' ? cardBackTextA : cardBackTextB;
+
+    frontText.textContent = "Parabéns! 🎉";
+    backText.textContent = "You've learned all the cards!";
+    
+    // Hide the back card element if it exists
+    if (nextCardElement) nextCardElement.style.display = 'none';
+
+    hardButton.style.display = 'none';
+    mediumButton.style.display = 'none';
+    easyButton.style.display = 'none';
+    restartLessonButton.style.display = 'block';
+}
+
+
+// The new core function for advancing to the next card with simultaneous animations
+function advanceCards() {
+    if (isAnimating) return; // Prevent multiple clicks during animation
+    isAnimating = true;
+
+    // The card that is currently active and will swipe out
+    const cardSwipingOut = activeCardElement;
+    // The card that is currently 'next' and will zoom into active position
+    const cardZoomingIn = nextCardElement;
+
+    // Data for the card that will become the *new* active card
+    const newDataForActive = sessionDeck.shift(); 
+    // Data for the card that will become the *new* next card (peek from deck)
+    const newDataForNext = sessionDeck[0];
+
+    // --- ANIMATION START ---
+    // 1. Start the current active card swiping out
+    cardSwipingOut.classList.add('swiping-active');
+    cardSwipingOut.classList.remove('is-active');
+    cardSwipingOut.classList.remove('is-flipped'); // Ensure it flips back if it was showing the back
+
+    // 2. Start the next card zooming into the active position
+    if (cardZoomingIn) {
+        cardZoomingIn.classList.remove('is-next');
+        cardZoomingIn.classList.add('is-active');
+    }
+
+    // --- ANIMATION END (after swipe-out transition) ---
+    setTimeout(() => {
+        // 3. Reset the swiped-out card and prepare it to be the new 'next' card
+        cardSwipingOut.classList.remove('swiping-active');
+        cardSwipingOut.classList.add('is-next');
+        cardSwipingOut.style.display = 'block'; // Make sure it's visible again
+
+        // 4. Update the references for active/next cards and current card data
+        activeCardElement = cardZoomingIn; // The card that just zoomed in is now active
+        nextCardElement = cardSwipingOut; // The card that swiped out is now the 'next' card in the back
+        currentCardData = newDataForActive; // The data for the current active card
+
+        // 5. Check if the deck is finished
+        if (!currentCardData) {
+            showCompletionScreen();
+            isAnimating = false;
+            return;
+        }
+
+        // 6. Populate the new 'next' card (the one in the back)
+        populateCard(nextCardElement, newDataForNext);
+
+        isAnimating = false; // Animation finished, re-enable clicks
+    }, 250); // This delay MUST match the 'swiping-active' CSS transition duration
+}
+
+function handleAnswer(level) {
+    if (!currentCardData || isAnimating) return;
+
+    // Place the card back in the deck based on difficulty
+    if (level === 'medium') {
+        sessionDeck.push(currentCardData);
+    } else if (level === 'hard') {
+        const insertIndex = Math.min(sessionDeck.length, 3);
+        sessionDeck.splice(insertIndex, 0, currentCardData);
+    }
+    // 'easy' cards are not put back in the deck
+
+    advanceCards();
+}
 
 function startLesson() {
     sessionDeck = [...fullDeck];
     shuffleArray(sessionDeck);
+    
+    // Reset all card states and visibility for both cards
+    cardA.className = 'flashcard'; // Remove all classes
+    cardB.className = 'flashcard'; // Remove all classes
+    cardA.style.display = 'block';
+    cardB.style.display = 'block';
+    
+    // Ensure both cards are unflipped initially
+    cardA.classList.remove('is-flipped');
+    cardB.classList.remove('is-flipped');
+
+    // Get the first two cards from the shuffled deck
+    const firstCardData = sessionDeck.shift(); 
+    const secondCardData = sessionDeck[0]; // Peek at the next card
+
+    if (!firstCardData) {
+        alert("This deck is empty!");
+        showSetupScreen();
+        return;
+    }
+    
+    // Set up the initial card stack: Card A is active, Card B is next
+    activeCardElement = cardA;
+    nextCardElement = cardB;
+    currentCardData = firstCardData;
+
+    populateCard(activeCardElement, firstCardData); // Populate the active card
+    populateCard(nextCardElement, secondCardData);   // Populate the card that will be behind it
+
+    activeCardElement.classList.add('is-active'); // Set Card A as the active one
+    nextCardElement.classList.add('is-next');     // Set Card B as the one in the back
+    
     restartLessonButton.style.display = 'none';
     showMainApp();
-    showNextCard();
 }
 
 async function loadCardData(url, deckName = null) {
-    cardFrontText.textContent = "Loading...";
-    restartLessonButton.style.display = 'none';
+    populateCard(cardA, { english: 'Loading...', portuguese: '' });
+    populateCard(cardB, null);
+    cardA.classList.add('is-active');
+    cardB.classList.add('is-next');
+    showMainApp();
+    hardButton.style.display = 'none';
+    mediumButton.style.display = 'none';
+    easyButton.style.display = 'none';
 
     const tsvUrl = transformGoogleSheetUrl(url);
 
@@ -194,41 +267,28 @@ async function loadCardData(url, deckName = null) {
 
         let dataRows = rows;
         if (rows.length > 0) {
-            const normalizeText = (text) => {
-                return text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-            };
-            const firstRow = normalizeText(rows[0]);
-            const headerKeywords = ['english', 'portugues', 'french', 'front', 'frente', 'back', 'verso', 'term', 'palavra', 'definition', 'traducao'];
-            const hasHeader = headerKeywords.some(keyword => firstRow.includes(keyword));
-            
-            if (hasHeader) {
-                console.log("Header detected, skipping first row.");
-                dataRows = rows.slice(1);
-            } else {
-                console.log("No header detected, including all rows.");
-            }
+            const hasHeader = ['english', 'portugues', 'french', 'front', 'frente', 'back', 'verso', 'term'].some(kw => rows[0].toLowerCase().includes(kw));
+            if (hasHeader) dataRows = rows.slice(1);
         }
 
         fullDeck = dataRows.map(row => {
             const columns = row.split('\t');
-            if (columns.length >= 2) {
-                const english = columns[0].trim();
-                const portuguese = columns[1].trim();
-                return { english, portuguese };
-            }
-            return null;
+            return columns.length >= 2 ? { english: columns[0].trim(), portuguese: columns[1].trim() } : null;
         }).filter(card => card && card.english && card.portuguese);
 
         if (fullDeck.length === 0) throw new Error("No cards found in the sheet.");
 
         let nameToSave = deckName;
         if (!nameToSave) {
-            nameToSave = prompt("What would you like to name this deck?", "My Deck");
-        }
-        if (nameToSave) {
-            saveRecentDeck(nameToSave, url);
+            try {
+                nameToSave = await askForDeckName(); 
+            } catch (error) {
+                showSetupScreen();
+                return;
+            }
         }
         
+        saveRecentDeck(nameToSave, url);
         startLesson();
     } catch (error) {
         console.error('Error loading card data:', error);
@@ -250,7 +310,8 @@ function init() {
     }
 }
 
-loadDeckButton.addEventListener('click', () => {
+deckLoadForm.addEventListener('submit', (event) => {
+    event.preventDefault();
     const url = urlInput.value.trim();
     if (url) {
         localStorage.setItem('spreadsheetUrl', url);
@@ -268,17 +329,51 @@ changeDeckButton.addEventListener('click', () => {
     }
 });
 
-flashcard.addEventListener('click', () => {
-    if (currentCard) {
-        flashcard.classList.toggle('is-flipped');
+cardContainer.addEventListener('click', () => {
+    if (currentCardData && activeCardElement) {
+        activeCardElement.classList.toggle('is-flipped');
     }
 });
 
-// New event listeners for the three-button system
+// Custom modal promise function (Unchanged)
+function askForDeckName() {
+    return new Promise((resolve, reject) => {
+        nameDeckModal.style.display = 'flex';
+        deckNameInput.value = 'My Deck';
+        deckNameInput.focus();
+        deckNameInput.select();
+
+        const closeModal = () => {
+            nameDeckModal.style.display = 'none';
+            confirmDeckNameBtn.removeEventListener('click', onConfirm);
+            deckNameInput.removeEventListener('keydown', onKeydown);
+            cancelDeckNameBtn.removeEventListener('click', onCancel);
+        };
+        const onConfirm = () => {
+            const name = deckNameInput.value.trim();
+            if (name) {
+                closeModal();
+                resolve(name);
+            }
+        };
+        const onCancel = () => {
+            closeModal();
+            reject();
+        };
+        const onKeydown = (event) => {
+            if (event.key === 'Enter') onConfirm();
+            else if (event.key === 'Escape') onCancel();
+        };
+
+        confirmDeckNameBtn.addEventListener('click', onConfirm);
+        cancelDeckNameBtn.addEventListener('click', onCancel);
+        deckNameInput.addEventListener('keydown', onKeydown);
+    });
+}
+
 hardButton.addEventListener('click', () => handleAnswer('hard'));
 mediumButton.addEventListener('click', () => handleAnswer('medium'));
 easyButton.addEventListener('click', () => handleAnswer('easy'));
-
 restartLessonButton.addEventListener('click', startLesson);
 
 recentDecksContainer.addEventListener('click', (event) => {
@@ -291,8 +386,7 @@ recentDecksContainer.addEventListener('click', (event) => {
             localStorage.setItem('spreadsheetUrl', url);
             loadCardData(url, name);
         }
-    }
-    else if (target.classList.contains('delete-deck-btn')) {
+    } else if (target.classList.contains('delete-deck-btn')) {
         const urlToDelete = target.dataset.url;
         if (urlToDelete && confirm('Are you sure you want to remove this deck?')) {
             deleteRecentDeck(urlToDelete);
@@ -300,78 +394,44 @@ recentDecksContainer.addEventListener('click', (event) => {
     }
 });
 
-// --- TUTORIAL MODAL LOGIC ---
+
+// --- TUTORIAL MODAL LOGIC (Unchanged) ---
+const tutorialImages = ['assets/tutorial-1.png', 'assets/tutorial-2.png', 'assets/tutorial-3.png', 'assets/tutorial-4.png', 'assets/tutorial-5.png', 'assets/tutorial-6.png'];
+let currentSlideIndex = 0;
+
 function showSlide(index) {
-    if (index >= tutorialImages.length) {
-        currentSlideIndex = 0;
-    } else if (index < 0) {
-        currentSlideIndex = tutorialImages.length - 1;
-    } else {
-        currentSlideIndex = index;
-    }
+    currentSlideIndex = (index + tutorialImages.length) % tutorialImages.length;
     tutorialImage.src = tutorialImages[currentSlideIndex];
     slideCounter.textContent = `${currentSlideIndex + 1} / ${tutorialImages.length}`;
 }
 
-function changeSlide(direction) {
-    showSlide(currentSlideIndex + direction);
-}
-
-function openTutorial() {
-    showSlide(0);
-    tutorialModal.style.display = 'flex';
-}
-
-function closeTutorial() {
-    tutorialModal.style.display = 'none';
-}
+function changeSlide(direction) { showSlide(currentSlideIndex + direction); }
+function openTutorial() { showSlide(0); tutorialModal.style.display = 'flex'; }
+function closeTutorial() { tutorialModal.style.display = 'none'; }
 
 tutorialLink.addEventListener('click', openTutorial);
 modalCloseButton.addEventListener('click', closeTutorial);
 prevArrow.addEventListener('click', () => changeSlide(-1));
 nextArrow.addEventListener('click', () => changeSlide(1));
-
-tutorialModal.addEventListener('click', (event) => {
-    if (event.target === tutorialModal) {
-        closeTutorial();
-    }
-});
+tutorialModal.addEventListener('click', (event) => { if (event.target === tutorialModal) closeTutorial(); });
 
 document.addEventListener('keydown', (event) => {
     if (tutorialModal.style.display === 'flex') {
-        if (event.key === 'ArrowLeft') {
-            changeSlide(-1);
-        } else if (event.key === 'ArrowRight') {
-            changeSlide(1);
-        } else if (event.key === 'Escape') {
-            closeTutorial();
-        }
+        if (event.key === 'ArrowLeft') changeSlide(-1);
+        else if (event.key === 'ArrowRight') changeSlide(1);
+        else if (event.key === 'Escape') closeTutorial();
     }
 });
 
 let touchStartX = 0;
-let touchEndX = 0;
-
-tutorialModal.addEventListener('touchstart', (event) => {
-    touchStartX = event.changedTouches[0].screenX;
-}, { passive: true });
-
+tutorialModal.addEventListener('touchstart', (event) => { touchStartX = event.changedTouches[0].screenX; }, { passive: true });
 tutorialModal.addEventListener('touchend', (event) => {
-    touchEndX = event.changedTouches[0].screenX;
-    handleSwipe();
+    const touchEndX = event.changedTouches[0].screenX;
+    if (touchEndX < touchStartX - 50) changeSlide(1);
+    if (touchEndX > touchStartX + 50) changeSlide(-1);
 });
 
-function handleSwipe() {
-    const swipeThreshold = 50;
-    if (touchEndX < touchStartX - swipeThreshold) {
-        changeSlide(1);
-    }
-    if (touchEndX > touchStartX + swipeThreshold) {
-        changeSlide(-1);
-    }
-}
-
-// --- PWA Service Worker Registration ---
+// --- PWA Service Worker Registration (Unchanged) ---
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('/service-worker.js');

@@ -70,10 +70,11 @@
 
         /* Style for the text above each button */
         .button-indicator {
-            font-size: 12px;
+            font-size: clamp(10px, 2.5vw, 12px); /* Responsive font size */
             font-weight: 500;
             color: #6c757d;
             margin-bottom: 4px;
+            white-space: nowrap; /* Prevents text from wrapping to a new line */
         }
         
         /* Base styles for the three action buttons */
@@ -100,28 +101,139 @@
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         }
 
-        /* Final "Traffic Light" Color Scheme */
-        #hard-button {
-            background-color: #d9534f; /* Red */
+        /* Final "Traffic Light" Color Scheme in order */
+        #easy-button {
+            background-color: #5cb85c; /* Green */
         }
         #medium-button {
             background-color: #f0ad4e; /* Yellow */
         }
-        #easy-button {
-            background-color: #5cb85c; /* Green */
+        #hard-button {
+            background-color: #d9534f; /* Red */
         }
-        /* --- NEW CARD ANIMATION --- */
-        @keyframes swipe-out {
-            to {
-                /* Moves the card 500px to the right, rotates it, and fades it out */
-                transform: translateX(500px) rotate(10deg);
-                opacity: 0;
+        /* --- DARK MODE STYLES --- */
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: #111827; /* Page Background */
+                color: #E5E7EB; /* Body Text */
+            }
+
+            /* Invert the logo to make it visible on the dark background */
+            .welcome-logo, .header-logo {
+                filter: invert(1) brightness(1.5) saturate(0);
+            }
+
+            /* Style the flashcard itself for dark mode */
+            .flashcard {
+                background-color: #1F2937; /* A slightly lighter dark gray */
+                color: #E5E7EB;
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+                border: 1px solid #374151; /* Subtle border */
+                border-radius:12px;
+            }
+
+            /* This new rule targets the card's front and back faces */
+            .card-face {
+                background-color: #1F2937;
+            }
+            
+            h1, h3 {
+                color: #E5E7EB;
+            }
+
+            /* Style form inputs and the main "Load Deck" button */
+            #sheet-url-input {
+                background-color: #374151;
+                border-color: #4B5563;
+                color: #E5E7EB;
+            }
+            #sheet-url-input::placeholder {
+                color: #9CA3AF;
+            }
+
+            #load-deck-button {
+                background-color: #115895; /* Primary brand color */
+                color: white;
+            }
+
+            /* Style all links to match your brand */
+            a, .link-button, #tutorial-link {
+                color: #198799; /* Link color */
+            }
+            a:hover, .link-button:hover, #tutorial-link:hover {
+                color: #DC4A0B; /* Link hover color */
+            }
+            .recent-decks-list a {
+                color: #198799 !important; /* Ensure recent deck links get the color */
+            }
+             .recent-decks-list a:hover {
+                color: #DC4A0B !important;
             }
         }
+        /* --- Custom Prompt Modal Styling --- */
+        .modal-overlay {
+            /* Uses the same base styles as your tutorial modal */
+            display: none; 
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            justify-content: center;
+            align-items: center;
+        }
 
-        .swiped-away {
-            /* This class applies the animation when added */
-            animation: swipe-out 0.2s ease-in forwards;
+        .modal-content h3 {
+            margin-bottom: 0.5rem;
+            color: var(--color-text);
+        }
+
+        .modal-content p {
+            font-size: 0.9rem;
+            margin-bottom: 1.5rem;
+            color: var(--color-text-subtle);
+        }
+
+        #name-deck-content {
+            padding: 2rem; /* Give it some nice padding */
+            text-align: center;
+        }
+
+        #deck-name-input {
+            width: 100%;
+            margin-bottom: 1.5rem; /* Space before buttons */
+        }
+
+        .modal-button-container {
+            display: flex;
+            justify-content: flex-end; /* Align buttons to the right */
+            gap: 0.75rem;
+        }
+
+        .modal-button-primary, .modal-button-secondary {
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            border: 1px solid transparent;
+        }
+
+        .modal-button-primary {
+            background-color: var(--color-primary);
+            color: var(--color-button-text);
+        }
+
+        .modal-button-secondary {
+            background-color: transparent;
+            color: var(--color-text-subtle);
+            border: 1px solid var(--color-border);
+        }
+
+        .modal-button-secondary:hover {
+            background-color: var(--color-border);
         }
     </style>
 </head>
@@ -138,9 +250,10 @@
             <button id="tutorial-link" class="link-button-inline">View Tutorial</button>
         </div>
 
-        <input type="text" id="sheet-url-input" placeholder="Paste your Google Sheet share link here" style="text-align:center;">
-        
-        <button id="load-deck-button">Load Deck</button>
+        <form id="deck-load-form">
+            <input type="text" id="sheet-url-input" placeholder="Paste your Google Sheet share link here" style="text-align:center;">
+            <button type="submit" id="load-deck-button">Load Deck</button>
+        </form>
 
         <div id="recent-decks-container">
         </div>
@@ -154,28 +267,36 @@
         </header>
 
         <div class="card-container" id="card-container">
-            <div class="flashcard" id="flashcard">
+            <div class="flashcard" id="flashcard-a">
                 <div class="card-face card-front">
-                    <p id="card-front-text">Loading...</p>
+                    <p id="card-front-text-a">Loading...</p>
                 </div>
                 <div class="card-face card-back">
-                    <p id="card-back-text"></p>
+                    <p id="card-back-text-a"></p>
+                </div>
+            </div>
+            <div class="flashcard" id="flashcard-b">
+                <div class="card-face card-front">
+                    <p id="card-front-text-b"></p>
+                </div>
+                <div class="card-face card-back">
+                    <p id="card-back-text-b"></p>
                 </div>
             </div>
         </div>
         
         <div class="button-container">
             <div class="button-wrapper">
-                <span class="button-indicator">Sooner</span>
-                <button id="hard-button">Again</button>
-            </div>
-            <div class="button-wrapper">
-                <span class="button-indicator">Later</span>
-                <button id="medium-button">Review</button>
-            </div>
-            <div class="button-wrapper">
                 <span class="button-indicator">Done</span>
-                <button id="easy-button">Learned</button>
+                <button id="easy-button">Easy</button>
+            </div>
+            <div class="button-wrapper">
+                <span class="button-indicator">End of Deck</span>
+                <button id="medium-button">Medium</button>
+            </div>
+            <div class="button-wrapper">
+                <span class="button-indicator">In a Few</span>
+                <button id="hard-button">Hard</button>
             </div>
         </div>
 
@@ -196,6 +317,17 @@
         </div>
     </div>
 
+    <div id="name-deck-modal" class="modal-overlay">
+        <div class="modal-content" id="name-deck-content">
+             <h3>Name Your Deck</h3>
+             <p>Give your new deck a name for easy access later.</p>
+             <input type="text" id="deck-name-input" placeholder="My New Deck">
+             <div class="modal-button-container">
+                 <button id="cancel-deck-name-btn" class="modal-button-secondary">Cancel</button>
+                 <button id="confirm-deck-name-btn" class="modal-button-primary">OK</button>
+             </div>
+        </div>
+    </div>
     <script src="app.js"></script>
 </body>
 </html>
