@@ -14,11 +14,18 @@
 <body>
 
     <div id="setup-screen" class="setup-container">
-        <img src="assets/logo-wordmark.png" alt="Viajo Logo" class="welcome-logo">
-        <p>To get started, publish a Google Sheet to the web as a CSV and paste the URL below.</p>
-        <input type="text" id="sheet-url-input" placeholder="Paste your Google Sheet URL here">
+        <a href="https://getviajo.com" target="_blank">
+            <img src="assets/logo-wordmark.png" alt="Viajo Logo" class="welcome-logo">
+        </a>
+        <a href="https://getviajo.com" target="_blank" class="viajo-link powered-by">Powered by getviajo.com</a>
+
+        <p>To get started, copy the "Share" link from your Google Sheet and paste it below.</p>
+        <input type="text" id="sheet-url-input" placeholder="Paste your Google Sheet share link here">
         <button id="load-deck-button">Load Deck</button>
-        <a href="https://getviajo.com" target="_blank" class="viajo-link">Powered by getviajo.com</a>
+        <p class="share-notice">(be sure it's set to 'anyone with the link can view')</p>
+
+        <div id="recent-decks-container">
+            </div>
     </div>
 
     <div id="main-app" style="display: none;">
@@ -38,8 +45,8 @@
         </div>
         
         <div class="button-container">
-            <button id="did-not-know-button" class="button-no">👎 I Didn't Know</button>
-            <button id="knew-it-button" class="button-yes">👍 I Knew It</button>
+            <button id="did-not-know-button" class="button-no">👎 Didn't Know</button>
+            <button id="knew-it-button" class="button-yes">👍 Knew It</button>
         </div>
 
         <button id="restart-lesson-button" style="display: none;">🔄 Restart Lesson</button>
