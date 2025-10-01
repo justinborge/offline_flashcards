@@ -415,7 +415,7 @@ recentDecksContainer.addEventListener('click', (event) => {
 
 
 // --- TUTORIAL MODAL LOGIC ---
-const tutorialImages = ['assets/tutorial-1.png', 'assets/tutorial-2.png', 'assets/tutorial-3.png', 'assets/tutorial-4.png', 'assets/tutorial-5.png', 'assets/tutorial-6.png'];
+const tutorialImages = ['assets/tutorial-1.png', 'assets/tutorial-2.png', 'assets/tutorial-3.png', 'assets/tutorial-4.png'];
 let currentSlideIndex = 0;
 
 function showSlide(index) {
