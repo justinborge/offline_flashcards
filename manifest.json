@@ -1,6 +1,6 @@
 {
   "name": "Viajo Flashcards",
-  "short_name": "Viajo",
+  "short_name": "Viajo Flashcards",
   "start_url": ".",
   "display": "standalone",
   "background_color": "#F4F6F8",
@@ -8,12 +8,12 @@
   "description": "A simple offline-capable flashcard app powered by Viajo.",
   "icons": [
     {
-      "src": "assets/android-chrome-192x192.png",
+      "src": "assets/icon-192x192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "assets/android-chrome-512x512.png",
+      "src": "assets/logo-icon.png",
       "sizes": "512x512",
       "type": "image/png"
     }
