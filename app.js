@@ -212,10 +212,32 @@ async function loadCardData(url, deckName = null) {
 
         // 1. Load cards into our permanent fullDeck using the potentially sliced dataRows
         fullDeck = dataRows.map(row => {
-            const columns = row.split(',');
+            // This robust parser handles both commas and double quotes inside your flashcard text.
+            const columns = [];
+            // This regex finds either a quoted field (handling escaped "") or an unquoted field.
+            const regex = /(?:"([^"]*(?:""[^"]*)*)"|([^,]*))(?:,|$)/g;
+            let match;
+            
+            // This loop extracts columns one by one from the row string.
+            while (match = regex.exec(row)) {
+                // Stop if we hit the end of the row to prevent adding an empty column.
+                if (match.index === row.length && match[0] === '') {
+                    break;
+                }
+                
+                // The regex captures quoted content in group 1, unquoted in group 2.
+                let col = match[1] !== undefined ? match[1] : match[2];
+                
+                // If the column was quoted, we must un-escape any internal double quotes ("" -> ").
+                if (match[1] !== undefined && col) {
+                    col = col.replace(/""/g, '"');
+                }
+                columns.push(col);
+            }
+
             if (columns.length >= 2) {
-                const portuguese = columns[0].trim().replace(/^"|"$/g, '');
-                const english = columns[1].trim().replace(/^"|"$/g, '');
+                const portuguese = (columns[0] || '').trim();
+                const english = (columns[1] || '').trim();
                 return { portuguese, english };
             }
             return null; // Handle potentially empty rows
