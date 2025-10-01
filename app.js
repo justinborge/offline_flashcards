@@ -33,11 +33,6 @@ function parseCsvRow(row) {
 // --- DOM ELEMENTS ---
 const setupScreen = document.getElementById('setup-screen');
 const mainApp = document.getElementById('main-app');
-...
-
-// --- DOM ELEMENTS ---
-const setupScreen = document.getElementById('setup-screen');
-const mainApp = document.getElementById('main-app');
 const recentDecksContainer = document.getElementById('recent-decks-container');
 const urlInput = document.getElementById('sheet-url-input');
 const loadDeckButton = document.getElementById('load-deck-button');
