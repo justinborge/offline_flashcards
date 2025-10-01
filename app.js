@@ -1,35 +1,3 @@
-// --- CSV PARSING HELPER FUNCTION ---
-// This function reliably parses a single row from a CSV file,
-// correctly handling commas and double-quotes inside the text.
-function parseCsvRow(row) {
-    const columns = [];
-    let currentColumn = '';
-    let inQuotes = false;
-    for (let i = 0; i < row.length; i++) {
-        const char = row[i];
-        if (char === '"') {
-            if (inQuotes && row[i + 1] === '"') {
-                // This is an escaped quote (""), so add a single quote to the column
-                currentColumn += '"';
-                i++; // Skip the next quote character
-            } else {
-                // This is a starting or ending quote
-                inQuotes = !inQuotes;
-            }
-        } else if (char === ',' && !inQuotes) {
-            // This is a column separator, so finalize the current column and start a new one
-            columns.push(currentColumn);
-            currentColumn = '';
-        } else {
-            // This is a regular character, add it to the current column
-            currentColumn += char;
-        }
-    }
-    // Add the final column to the list
-    columns.push(currentColumn);
-    return columns;
-}
-
 // --- DOM ELEMENTS ---
 const setupScreen = document.getElementById('setup-screen');
 const mainApp = document.getElementById('main-app');
@@ -44,7 +12,6 @@ const cardFrontText = document.getElementById('card-front-text');
 const cardBackText = document.getElementById('card-back-text');
 const didNotKnowButton = document.getElementById('did-not-know-button');
 const knewItButton = document.getElementById('knew-it-button');
-// New restart button element
 const restartLessonButton = document.getElementById('restart-lesson-button');
 
 // --- TUTORIAL MODAL ELEMENTS ---
@@ -58,8 +25,10 @@ const slideCounter = document.getElementById('slide-counter');
 
 
 // --- APP STATE ---
-// fullDeck holds the master copy of all cards for the current lesson
 let fullDeck = [];
+let sessionDeck = [];
+let currentCard = null;
+
 // --- RECENT DECKS LOGIC ---
 function getRecentDecks() {
     return JSON.parse(localStorage.getItem('recentDecks')) || [];
@@ -67,63 +36,51 @@ function getRecentDecks() {
 
 function saveRecentDeck(name, url) {
     let decks = getRecentDecks();
-    // Remove any existing entry with the same URL to avoid duplicates
     decks = decks.filter(deck => deck.url !== url);
-    // Add the new deck to the front of the array
     decks.unshift({ name, url });
-    // Keep only the 5 most recent decks
     decks = decks.slice(0, 5);
     localStorage.setItem('recentDecks', JSON.stringify(decks));
 }
 
-// REPLACE the old renderRecentDecks function with this one
 function renderRecentDecks() {
     const decks = getRecentDecks();
     if (decks.length > 0) {
         let html = '<h3>Recent Decks</h3><ol class="recent-decks-list">';
         decks.forEach(deck => {
-            // Add a delete button with a 'data-url' attribute next to each deck link
             html += `<li><a href="#" data-url="${deck.url}">${deck.name}</a><button class="delete-deck-btn" data-url="${deck.url}" title="Remove this deck">&times;</button></li>`;
         });
         html += '</ol>';
         recentDecksContainer.innerHTML = html;
     } else {
-        recentDecksContainer.innerHTML = ''; // Clear if no decks
+        recentDecksContainer.innerHTML = '';
     }
 }
 
-// PASTE THE NEW FUNCTION HERE
 function deleteRecentDeck(urlToDelete) {
     let decks = getRecentDecks();
     decks = decks.filter(deck => deck.url !== urlToDelete);
     localStorage.setItem('recentDecks', JSON.stringify(decks));
-    renderRecentDecks(); // Re-render the list to show the change
+    renderRecentDecks();
 }
 
 // --- URL TRANSFORMATION ---
 function transformGoogleSheetUrl(url) {
-    // First, try to find a URL that includes a specific tab ID ('gid')
     let match = url.match(/spreadsheets\/d\/([a-zA-Z0-9-_]+).*[#&?]gid=([0-9]+)/);
 
     if (match && match[1] && match[2]) {
         const spreadsheetId = match[1];
         const gid = match[2];
-        return `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=csv&gid=${gid}`;
+        return `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=tsv&gid=${gid}`;
     }
 
-    // If no specific tab ID is found, fall back to the original logic (gets the first sheet)
     match = url.match(/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
     if (match && match[1]) {
         const spreadsheetId = match[1];
-        return `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=csv`;
+        return `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=tsv`;
     }
 
-    // If it's not a recognizable Google Sheet URL, return it as is.
     return url;
 }
-// sessionDeck holds the cards for the current study session
-let sessionDeck = [];
-let currentCard = null;
 
 // --- TUTORIAL STATE ---
 const tutorialImages = [
@@ -142,8 +99,6 @@ function showMainApp() {
     mainApp.style.display = 'flex';
     mainApp.style.flexDirection = 'column';
     mainApp.style.alignItems = 'center';
-
-    // FIX: Ensure the answer buttons are visible when starting/restarting a deck
     didNotKnowButton.style.display = '';
     knewItButton.style.display = '';
 }
@@ -162,8 +117,8 @@ function shuffleArray(array) {
 
 function displayCard(card) {
     currentCard = card;
-    cardFrontText.textContent = card.portuguese;
-    cardBackText.textContent = card.english;
+    cardFrontText.textContent = card.english; // English on the front
+    cardBackText.textContent = card.portuguese; // Other language on the back
     flashcard.classList.remove('is-flipped');
 }
 
@@ -174,13 +129,12 @@ function showNextCard() {
             const nextCard = sessionDeck.shift();
             displayCard(nextCard);
         } else {
-            // End of lesson logic
             currentCard = null;
-            cardFrontText.textContent = "You've learned all the cards! 🎉";
+            cardFrontText.textContent = "Parabéns! 🎉";
             cardBackText.textContent = "You've learned all the cards!";
             didNotKnowButton.style.display = 'none';
             knewItButton.style.display = 'none';
-            restartLessonButton.style.display = 'block'; // Show the restart button
+            restartLessonButton.style.display = 'block';
         }
         cardContainer.classList.remove('hiding');
     }, 200);
@@ -194,17 +148,11 @@ function handleAnswer(knewIt) {
     showNextCard();
 }
 
-// NEW: Reusable function to start or restart a lesson
 function startLesson() {
-    // Copy the full deck into the session deck to work with
     sessionDeck = [...fullDeck];
     shuffleArray(sessionDeck);
-
-    // Make sure the UI is in the correct state for starting
     restartLessonButton.style.display = 'none';
-    showMainApp(); // This also ensures the answer buttons are visible
-
-    // Show the first card
+    showMainApp();
     showNextCard();
 }
 
@@ -212,85 +160,63 @@ async function loadCardData(url, deckName = null) {
     cardFrontText.textContent = "Loading...";
     restartLessonButton.style.display = 'none';
 
-    // Transform the user-friendly URL to a direct CSV link
-    const csvUrl = transformGoogleSheetUrl(url);
+    const tsvUrl = transformGoogleSheetUrl(url);
 
     try {
-        const response = await fetch(csvUrl);
-        const csvText = await response.text();
-        const rows = csvText.trim().split('\n');
+        const response = await fetch(tsvUrl);
+        const tsvText = await response.text();
+        const rows = tsvText.trim().split('\n');
 
-        // --- NEW: More Robust Header Detection ---
-        let dataRows = rows; // Assume there is no header by default
+        let dataRows = rows;
         if (rows.length > 0) {
-            // Function to remove accents/diacritics for easier matching
             const normalizeText = (text) => {
                 return text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
             };
-            
             const firstRow = normalizeText(rows[0]);
-
-            // Expanded list of keywords in English and Portuguese
-            const headerKeywords = [
-                'english', 'portugues', // Note: 'português' will become 'portugues'
-                'front', 'frente',
-                'back', 'verso',
-                'term', 'palavra',
-                'definition', 'traducao' // 'tradução' will become 'traducao'
-            ];
-
-            // Check if the normalized first row contains any common header words
+            const headerKeywords = ['english', 'portugues', 'french', 'front', 'frente', 'back', 'verso', 'term', 'palavra', 'definition', 'traducao'];
             const hasHeader = headerKeywords.some(keyword => firstRow.includes(keyword));
             
             if (hasHeader) {
                 console.log("Header detected, skipping first row.");
-                dataRows = rows.slice(1); // If header is found, skip the first row
+                dataRows = rows.slice(1);
             } else {
                 console.log("No header detected, including all rows.");
             }
         }
-        // --- END: More Robust Header Detection ---
 
-        // 1. Load cards into our permanent fullDeck using the potentially sliced dataRows
         fullDeck = dataRows.map(row => {
-            // Use our new, robust parser function to split the row into columns.
-            const columns = parseCsvRow(row);
-            
+            const columns = row.split('\t');
             if (columns.length >= 2) {
-                const portuguese = columns[0].trim();
-                const english = columns[1].trim();
-                return { portuguese, english };
+                const english = columns[0].trim();
+                const portuguese = columns[1].trim(); // This variable holds the second language (Portuguese, French, etc.)
+                return { english, portuguese };
             }
-            return null; // Handle potentially empty or malformed rows
-        }).filter(card => card && card.portuguese && card.english);
-
+            return null;
+        }).filter(card => card && card.english && card.portuguese);
 
         if (fullDeck.length === 0) throw new Error("No cards found in the sheet.");
 
-        // 2. Save the deck to our recent list
         let nameToSave = deckName;
         if (!nameToSave) {
-            nameToSave = prompt("What would you like to name this deck?", "My Portuguese Deck");
+            nameToSave = prompt("What would you like to name this deck?", "My Deck");
         }
         if (nameToSave) {
             saveRecentDeck(nameToSave, url);
         }
-
-        // 3. Start the lesson
+        
         startLesson();
     } catch (error) {
         console.error('Error loading card data:', error);
-        alert("Could not load cards. Please check the URL and share settings.");
+        alert("Could not load cards. Please check the URL, share settings, and data format.");
         showSetupScreen();
     }
 }
 
 // --- INITIALIZATION & EVENT LISTENERS ---
 function init() {
-    renderRecentDecks(); // Render the list of recent decks
+    renderRecentDecks();
     const savedUrl = localStorage.getItem('spreadsheetUrl');
     if (savedUrl) {
-        // We find the deck in our recent list to get its name
         const recentDecks = getRecentDecks();
         const savedDeck = recentDecks.find(deck => deck.url === savedUrl);
         loadCardData(savedUrl, savedDeck ? savedDeck.name : null);
@@ -303,17 +229,16 @@ loadDeckButton.addEventListener('click', () => {
     const url = urlInput.value.trim();
     if (url) {
         localStorage.setItem('spreadsheetUrl', url);
-        loadCardData(url); // The function will now handle prompting for a name
-        urlInput.value = ''; // Clear the input field
+        loadCardData(url);
+        urlInput.value = '';
     }
 });
 
-// UPDATED: Change deck logic no longer reloads the page
 changeDeckButton.addEventListener('click', () => {
-    if (confirm("Are you sure you want to change decks? This will clear your current deck.")) {
+    if (confirm("Are you sure you want to change decks?")) {
         localStorage.removeItem('spreadsheetUrl');
         urlInput.value = '';
-        renderRecentDecks(); // Re-render decks when going back to setup
+        renderRecentDecks();
         showSetupScreen();
     }
 });
@@ -326,16 +251,12 @@ flashcard.addEventListener('click', () => {
 
 didNotKnowButton.addEventListener('click', () => handleAnswer(false));
 knewItButton.addEventListener('click', () => handleAnswer(true));
-// NEW: Event listener for the restart button
 restartLessonButton.addEventListener('click', startLesson);
 
-// NEW: Event listener for the recent decks list
 recentDecksContainer.addEventListener('click', (event) => {
     const target = event.target;
-    
-    // Check if a deck link was clicked
     if (target.tagName === 'A') {
-        event.preventDefault(); // Prevent the link from navigating
+        event.preventDefault();
         const url = target.dataset.url;
         const name = target.textContent;
         if (url) {
@@ -343,7 +264,6 @@ recentDecksContainer.addEventListener('click', (event) => {
             loadCardData(url, name);
         }
     }
-    // Check if a delete button was clicked
     else if (target.classList.contains('delete-deck-btn')) {
         const urlToDelete = target.dataset.url;
         if (urlToDelete && confirm('Are you sure you want to remove this deck?')) {
@@ -370,7 +290,7 @@ function changeSlide(direction) {
 }
 
 function openTutorial() {
-    showSlide(0); // Start at the first slide
+    showSlide(0);
     tutorialModal.style.display = 'flex';
 }
 
@@ -383,14 +303,12 @@ modalCloseButton.addEventListener('click', closeTutorial);
 prevArrow.addEventListener('click', () => changeSlide(-1));
 nextArrow.addEventListener('click', () => changeSlide(1));
 
-// Close modal if user clicks on the dark background overlay
 tutorialModal.addEventListener('click', (event) => {
     if (event.target === tutorialModal) {
         closeTutorial();
     }
 });
 
-// Add keyboard navigation (left/right arrows)
 document.addEventListener('keydown', (event) => {
     if (tutorialModal.style.display === 'flex') {
         if (event.key === 'ArrowLeft') {
@@ -403,7 +321,6 @@ document.addEventListener('keydown', (event) => {
     }
 });
 
-// Swipe functionality for mobile
 let touchStartX = 0;
 let touchEndX = 0;
 
@@ -417,13 +334,11 @@ tutorialModal.addEventListener('touchend', (event) => {
 });
 
 function handleSwipe() {
-    const swipeThreshold = 50; // Minimum distance for a swipe
+    const swipeThreshold = 50;
     if (touchEndX < touchStartX - swipeThreshold) {
-        // Swiped left
         changeSlide(1);
     }
     if (touchEndX > touchStartX + swipeThreshold) {
-        // Swiped right
         changeSlide(-1);
     }
 }
