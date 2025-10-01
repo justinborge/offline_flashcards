@@ -76,19 +76,28 @@ function saveRecentDeck(name, url) {
     localStorage.setItem('recentDecks', JSON.stringify(decks));
 }
 
+// REPLACE the old renderRecentDecks function with this one
 function renderRecentDecks() {
     const decks = getRecentDecks();
     if (decks.length > 0) {
         let html = '<h3>Recent Decks</h3><ol class="recent-decks-list">';
         decks.forEach(deck => {
-            // Use data-url attribute to store the URL safely
-            html += `<li><a href="#" data-url="${deck.url}">${deck.name}</a></li>`;
+            // Add a delete button with a 'data-url' attribute next to each deck link
+            html += `<li><a href="#" data-url="${deck.url}">${deck.name}</a><button class="delete-deck-btn" data-url="${deck.url}" title="Remove this deck">&times;</button></li>`;
         });
         html += '</ol>';
         recentDecksContainer.innerHTML = html;
     } else {
         recentDecksContainer.innerHTML = ''; // Clear if no decks
     }
+}
+
+// PASTE THE NEW FUNCTION HERE
+function deleteRecentDeck(urlToDelete) {
+    let decks = getRecentDecks();
+    decks = decks.filter(deck => deck.url !== urlToDelete);
+    localStorage.setItem('recentDecks', JSON.stringify(decks));
+    renderRecentDecks(); // Re-render the list to show the change
 }
 
 // --- URL TRANSFORMATION ---
@@ -322,14 +331,23 @@ restartLessonButton.addEventListener('click', startLesson);
 
 // NEW: Event listener for the recent decks list
 recentDecksContainer.addEventListener('click', (event) => {
-    // Check if a link inside the container was clicked
-    if (event.target.tagName === 'A') {
+    const target = event.target;
+    
+    // Check if a deck link was clicked
+    if (target.tagName === 'A') {
         event.preventDefault(); // Prevent the link from navigating
-        const url = event.target.dataset.url;
-        const name = event.target.textContent;
+        const url = target.dataset.url;
+        const name = target.textContent;
         if (url) {
             localStorage.setItem('spreadsheetUrl', url);
             loadCardData(url, name);
+        }
+    }
+    // Check if a delete button was clicked
+    else if (target.classList.contains('delete-deck-btn')) {
+        const urlToDelete = target.dataset.url;
+        if (urlToDelete && confirm('Are you sure you want to remove this deck?')) {
+            deleteRecentDeck(urlToDelete);
         }
     }
 });
