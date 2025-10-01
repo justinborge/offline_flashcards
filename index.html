@@ -20,7 +20,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wght@8..144,100..900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
-<style>
+    <style>
         /* Styles for the recent decks list */
         .recent-decks-list li {
             display: flex;
@@ -48,7 +48,7 @@
             width: 100%;
             max-width: 500px;
             aspect-ratio: 5 / 3;
-            margin-bottom: 16px; /* Adjusted space */
+            margin-bottom: 16px;
         }
 
         /* Styles the main button container */
@@ -60,25 +60,25 @@
             gap: 10px;
         }
         
-        /* New wrapper for each button and its indicator */
+        /* Wrapper for each button and its indicator */
         .button-wrapper {
             display: flex;
             flex-direction: column;
             align-items: center;
-            flex: 1; /* Allows wrappers to grow equally */
+            flex: 1;
         }
 
-        /* New style for the text above each button */
+        /* Style for the text above each button */
         .button-indicator {
             font-size: 12px;
             font-weight: 500;
-            color: #6c757d; /* Muted gray color */
+            color: #6c757d;
             margin-bottom: 4px;
         }
         
         /* Base styles for the three action buttons */
         #easy-button, #medium-button, #hard-button {
-            width: 100%; /* Make button fill its wrapper */
+            width: 100%;
             color: white;
             border: none;
             padding: 10px 15px;
@@ -100,15 +100,15 @@
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         }
 
-        /* Button colors */
-        #easy-button {
-            background-color: #198799; /* Teal */ 
+        /* Final "Traffic Light" Color Scheme */
+        #hard-button {
+            background-color: #d9534f; /* Red */
         }
         #medium-button {
-            background-color: #DC4A0B; /* Orange */
+            background-color: #f0ad4e; /* Yellow */
         }
-        #hard-button {
-            background-color: #105994; /* Dark Blue */
+        #easy-button {
+            background-color: #5cb85c; /* Green */
         }
     </style>
 </head>
@@ -154,15 +154,15 @@
         <div class="button-container">
             <div class="button-wrapper">
                 <span class="button-indicator">Sooner</span>
-                <button id="hard-button">Hard</button>
+                <button id="hard-button">Again</button>
             </div>
             <div class="button-wrapper">
                 <span class="button-indicator">Later</span>
-                <button id="medium-button">Medium</button>
+                <button id="medium-button">Review</button>
             </div>
             <div class="button-wrapper">
                 <span class="button-indicator">Done</span>
-                <button id="easy-button">Easy</button>
+                <button id="easy-button">Learned</button>
             </div>
         </div>
 
