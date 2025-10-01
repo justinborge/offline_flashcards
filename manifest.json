@@ -8,12 +8,12 @@
   "description": "A simple offline-capable flashcard app powered by Viajo.",
   "icons": [
     {
-      "src": "assets/icon-192x192.png",
+      "src": "assets/android-chrome-192x192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "assets/logo-icon.png",
+      "src": "assets/android-chrome-512x512.png",
       "sizes": "512x512",
       "type": "image/png"
     }

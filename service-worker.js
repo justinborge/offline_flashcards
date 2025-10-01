@@ -6,8 +6,9 @@ const APP_SHELL_URLS = [
   'index.html',
   'style.css',
   'app.js',
-  'assets/icon-192x192.png',
-  'assets/logo-icon.png',
+  'assets/android-chrome-192x192.png',
+  'assets/android-chrome-512x512.png',
+  'assets/apple-touch-icon.png',
   'assets/logo-wordmark.png'
 ];
 
