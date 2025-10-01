@@ -1,11 +1,11 @@
 {
-  "name": "Português Flashcards",
-  "short_name": "Português",
+  "name": "Offline Flashcards",
+  "short_name": "Flashcards",
   "start_url": ".",
   "display": "standalone",
   "background_color": "#121212",
   "theme_color": "#007BFF",
-  "description": "A simple offline-capable flashcard app for learning Portuguese.",
+  "description": "A simple offline-capable flashcard app",
   "icons": [
     {
       "src": "icon-192x192.png",
