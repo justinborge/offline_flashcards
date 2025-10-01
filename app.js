@@ -141,6 +141,29 @@ function showCompletionScreen() {
 }
 
 
+function handleAnswer(level) {
+    if (!currentCardData || isAnimating) return;
+
+    // Place the card back in the deck based on difficulty
+    if (level === 'medium') {
+        sessionDeck.push(currentCardData);
+    } else if (level === 'hard') {
+        const insertIndex = Math.min(sessionDeck.length, 3);
+        sessionDeck.splice(insertIndex, 0, currentCardData);
+    }
+    // 'easy' cards are not put back in the deck
+
+    // Determine the swipe direction based on the answer level
+    let direction = 'right'; // Default to 'right' for hard
+    if (level === 'easy') {
+        direction = 'left';
+    } else if (level === 'medium') {
+        direction = 'down';
+    }
+
+    advanceCards(direction);
+}
+
 // The new core function for advancing to the next card with simultaneous animations
 function advanceCards(direction = 'right') {
     if (isAnimating) return; // Prevent multiple clicks during animation
@@ -158,7 +181,18 @@ function advanceCards(direction = 'right') {
 
     // --- ANIMATION START ---
     // 1. Start the current active card swiping out in the correct direction
-    const swipeClass = direction === 'left' ? 'swiping-left' : 'swiping-right';
+    let swipeClass;
+    switch (direction) {
+        case 'left':
+            swipeClass = 'swiping-left';
+            break;
+        case 'down':
+            swipeClass = 'swiping-down';
+            break;
+        default: // 'right' and any other case
+            swipeClass = 'swiping-right';
+            break;
+    }
     cardSwipingOut.classList.add(swipeClass);
     cardSwipingOut.classList.remove('is-active');
     cardSwipingOut.classList.remove('is-flipped'); // Ensure it flips back if it was showing the back
@@ -172,7 +206,7 @@ function advanceCards(direction = 'right') {
     // --- ANIMATION END (after swipe-out transition) ---
     setTimeout(() => {
         // 3. Reset the swiped-out card and prepare it to be the new 'next' card
-        cardSwipingOut.classList.remove('swiping-left', 'swiping-right'); // Remove both possible classes
+        cardSwipingOut.classList.remove('swiping-left', 'swiping-right', 'swiping-down'); // Remove all possible classes
         cardSwipingOut.classList.add('is-next');
         cardSwipingOut.style.display = 'block'; // Make sure it's visible again
 
