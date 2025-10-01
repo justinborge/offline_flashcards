@@ -110,6 +110,19 @@
         #easy-button {
             background-color: #5cb85c; /* Green */
         }
+        /* --- NEW CARD ANIMATION --- */
+        @keyframes swipe-out {
+            to {
+                /* Moves the card 500px to the right, rotates it, and fades it out */
+                transform: translateX(500px) rotate(10deg);
+                opacity: 0;
+            }
+        }
+
+        .swiped-away {
+            /* This class applies the animation when added */
+            animation: swipe-out 0.3s ease-in forwards;
+        }
     </style>
 </head>
 <body>

@@ -145,25 +145,31 @@ function showNextCard() {
     }, 200);
 }
 
-// NEW "three-pile" answer logic
+// Updated answer logic with "swipe away" animation
 function handleAnswer(level) {
     if (!currentCard) return;
 
-    switch (level) {
-        case 'easy':
-            // Card is correct, do nothing (it's removed from the session)
-            break;
-        case 'medium':
-            // Card is okay, add it to the very end of the deck
+    if (level === 'easy') {
+        // 1. Add the CSS class to trigger the swipe animation
+        cardContainer.classList.add('swiped-away');
+        
+        // 2. Wait for the animation to finish (300ms) before showing the next card
+        setTimeout(() => {
+            // 3. Clean up the class so the next card appears normally
+            cardContainer.classList.remove('swiped-away');
+            showNextCard();
+        }, 300); // This duration MUST match the animation duration in the CSS
+    } else {
+        // For "medium" and "hard", the logic is the same as before
+        if (level === 'medium') {
             sessionDeck.push(currentCard);
-            break;
-        case 'hard':
-            // Card is difficult, re-insert it 3 cards from now to see it again soon
+        } else if (level === 'hard') {
             const insertIndex = Math.min(sessionDeck.length, 3);
             sessionDeck.splice(insertIndex, 0, currentCard);
-            break;
+        }
+        // Use the default fade-out transition for these buttons
+        showNextCard();
     }
-    showNextCard();
 }
 
 
