@@ -235,6 +235,57 @@
         .modal-button-secondary:hover {
             background-color: var(--color-border);
         }
+
+        /* In the <style> tag in index.html */
+        .input-wrapper {
+            position: relative;
+            width: 100%;
+            margin-bottom: 1rem;
+        }
+
+        #sheet-url-input {
+            /* Add padding on the right to make space for the button */
+            padding-right: 45px !important; 
+            margin-bottom: 0; /* Remove margin since the wrapper now has it */
+        }
+
+        .open-sheets-btn {
+            position: absolute;
+            right: 1px;
+            top: 1px;
+            bottom: 1px;
+            width: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #e9ecef; /* A light grey */
+            border-radius: 0 8px 8px 0;
+            color: #495057; /* A darker grey for the icon */
+            transition: background-color 0.2s ease;
+        }
+
+        .open-sheets-btn:hover {
+            background-color: #dee2e6; /* Slightly darker on hover */
+        }
+
+        /* Dark mode adjustments for the new button */
+        @media (prefers-color-scheme: dark) {
+            .open-sheets-btn {
+                background-color: #4B5563; /* Dark mode background */
+                color: #E5E7EB; /* Light icon */
+            }
+            .open-sheets-btn:hover {
+                background-color: #374151;
+            }
+        }
+
+        #deck-load-form {
+            width: 100%;
+        }
+
+        #sheet-url-input::placeholder {
+            font-size: 0.9rem;
+        }
     </style>
 </head>
 <body>
@@ -251,9 +302,18 @@
         </div>
 
         <form id="deck-load-form">
+        <div class="input-wrapper">
             <input type="text" id="sheet-url-input" placeholder="Paste your Google Sheet share link here" style="text-align:center;">
-            <button type="submit" id="load-deck-button">Load Deck</button>
-        </form>
+            
+            <a href="https://sheets.google.com" target="_blank" rel="noopener noreferrer" class="open-sheets-btn" title="Open Google Sheets">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5z"/>
+                    <path fill-rule="evenodd" d="M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0v-5z"/>
+                </svg>
+            </a>
+        </div>
+        <button type="submit" id="load-deck-button">Load Deck</button>
+    </form>
 
         <div id="recent-decks-container">
         </div>
