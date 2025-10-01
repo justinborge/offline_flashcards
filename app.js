@@ -42,7 +42,7 @@ let activeCardElement = null; // The DOM element for the active card
 let nextCardElement = null; // The DOM element for the card in the back
 let isAnimating = false; // Prevents fast multi-clicks during animation
 
-// --- RECENT DECKS LOGIC (Unchanged) ---
+// --- RECENT DECKS LOGIC ---
 function getRecentDecks() {
     return JSON.parse(localStorage.getItem('recentDecks')) || [];
 }
@@ -76,7 +76,7 @@ function deleteRecentDeck(urlToDelete) {
     renderRecentDecks();
 }
 
-// --- URL TRANSFORMATION (Unchanged) ---
+// --- URL TRANSFORMATION ---
 function transformGoogleSheetUrl(url) {
     let match = url.match(/spreadsheets\/d\/([a-zA-Z0-9-_]+).*[#&?]gid=([0-9]+)/);
     if (match && match[1] && match[2]) return `https://docs.google.com/spreadsheets/d/${match[1]}/export?format=tsv&gid=${match[2]}`;
@@ -140,7 +140,6 @@ function showCompletionScreen() {
     restartLessonButton.style.display = 'block';
 }
 
-
 function handleAnswer(level) {
     if (!currentCardData || isAnimating) return;
 
@@ -160,11 +159,11 @@ function handleAnswer(level) {
     } else if (level === 'medium') {
         direction = 'down';
     }
-
+    
     advanceCards(direction);
 }
 
-// The new core function for advancing to the next card with simultaneous animations
+// The core function for advancing to the next card with simultaneous animations
 function advanceCards(direction = 'right') {
     if (isAnimating) return; // Prevent multiple clicks during animation
     isAnimating = true;
@@ -207,77 +206,6 @@ function advanceCards(direction = 'right') {
     setTimeout(() => {
         // 3. Reset the swiped-out card and prepare it to be the new 'next' card
         cardSwipingOut.classList.remove('swiping-left', 'swiping-right', 'swiping-down'); // Remove all possible classes
-        cardSwipingOut.classList.add('is-next');
-        cardSwipingOut.style.display = 'block'; // Make sure it's visible again
-
-        // 4. Update the references for active/next cards and current card data
-        activeCardElement = cardZoomingIn; // The card that just zoomed in is now active
-        nextCardElement = cardSwipingOut; // The card that swiped out is now the 'next' card in the back
-        currentCardData = newDataForActive; // The data for the current active card
-
-        // 5. Check if the deck is finished
-        if (!currentCardData) {
-            showCompletionScreen();
-            isAnimating = false;
-            return;
-        }
-
-        // 6. Populate the new 'next' card (the one in the back)
-        populateCard(nextCardElement, newDataForNext);
-
-        isAnimating = false; // Animation finished, re-enable clicks
-    }, 250); // This delay MUST match the CSS transition duration
-}
-
-function handleAnswer(level) {
-    if (!currentCardData || isAnimating) return;
-
-    // Place the card back in the deck based on difficulty
-    if (level === 'medium') {
-        sessionDeck.push(currentCardData);
-    } else if (level === 'hard') {
-        const insertIndex = Math.min(sessionDeck.length, 3);
-        sessionDeck.splice(insertIndex, 0, currentCardData);
-    }
-    // 'easy' cards are not put back in the deck
-
-    // Determine the swipe direction based on the answer level
-    const direction = (level === 'easy') ? 'left' : 'right';
-    advanceCards(direction);
-}
-
-// The new core function for advancing to the next card with simultaneous animations
-function advanceCards(direction = 'right') {
-    if (isAnimating) return; // Prevent multiple clicks during animation
-    isAnimating = true;
-
-    // The card that is currently active and will swipe out
-    const cardSwipingOut = activeCardElement;
-    // The card that is currently 'next' and will zoom into active position
-    const cardZoomingIn = nextCardElement;
-
-    // Data for the card that will become the *new* active card
-    const newDataForActive = sessionDeck.shift(); 
-    // Data for the card that will become the *new* next card (peek from deck)
-    const newDataForNext = sessionDeck[0];
-
-    // --- ANIMATION START ---
-    // 1. Start the current active card swiping out in the correct direction
-    const swipeClass = direction === 'left' ? 'swiping-left' : 'swiping-right';
-    cardSwipingOut.classList.add(swipeClass);
-    cardSwipingOut.classList.remove('is-active');
-    cardSwipingOut.classList.remove('is-flipped'); // Ensure it flips back if it was showing the back
-
-    // 2. Start the next card zooming into the active position
-    if (cardZoomingIn) {
-        cardZoomingIn.classList.remove('is-next');
-        cardZoomingIn.classList.add('is-active');
-    }
-
-    // --- ANIMATION END (after swipe-out transition) ---
-    setTimeout(() => {
-        // 3. Reset the swiped-out card and prepare it to be the new 'next' card
-        cardSwipingOut.classList.remove('swiping-left', 'swiping-right'); // Remove both possible classes
         cardSwipingOut.classList.add('is-next');
         cardSwipingOut.style.display = 'block'; // Make sure it's visible again
 
@@ -426,7 +354,7 @@ cardContainer.addEventListener('click', () => {
     }
 });
 
-// Custom modal promise function (Unchanged)
+// Custom modal promise function
 function askForDeckName() {
     return new Promise((resolve, reject) => {
         nameDeckModal.style.display = 'flex';
@@ -486,7 +414,7 @@ recentDecksContainer.addEventListener('click', (event) => {
 });
 
 
-// --- TUTORIAL MODAL LOGIC (Unchanged) ---
+// --- TUTORIAL MODAL LOGIC ---
 const tutorialImages = ['assets/tutorial-1.png', 'assets/tutorial-2.png', 'assets/tutorial-3.png', 'assets/tutorial-4.png', 'assets/tutorial-5.png', 'assets/tutorial-6.png'];
 let currentSlideIndex = 0;
 
@@ -562,7 +490,7 @@ tutorialModal.addEventListener('touchend', (event) => {
     if (touchEndX > touchStartX + 50) changeSlide(-1);
 });
 
-// --- PWA Service Worker Registration (Unchanged) ---
+// --- PWA Service Worker Registration ---
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('/service-worker.js');
