@@ -41,6 +41,19 @@
         .delete-deck-btn:hover {
             color: #d9534f; /* A reddish color for delete actions */
         }
+
+        .button-medium {
+            background-color: #f0ad4e; /* An orange color */
+            color: white;
+            border: none;
+            padding: 15px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            flex-grow: 1;
+            margin: 0 5px;
+        }
     </style>
 </head>
 <body>
@@ -83,8 +96,9 @@
         </div>
         
         <div class="button-container">
-            <button id="did-not-know-button" class="button-no">👎 Didn't Know</button>
-            <button id="knew-it-button" class="button-yes">👍 Knew It</button>
+            <button id="hard-button" class="button-no">Hard</button>
+            <button id="medium-button" class="button-medium">Medium</button>
+            <button id="easy-button" class="button-yes">Easy</button>
         </div>
 
         <button id="restart-lesson-button" style="display: none;">🔄 Restart Lesson</button>

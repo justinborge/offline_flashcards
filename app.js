@@ -10,9 +10,12 @@ const cardContainer = document.getElementById('card-container');
 const flashcard = document.getElementById('flashcard');
 const cardFrontText = document.getElementById('card-front-text');
 const cardBackText = document.getElementById('card-back-text');
-const didNotKnowButton = document.getElementById('did-not-know-button');
-const knewItButton = document.getElementById('knew-it-button');
 const restartLessonButton = document.getElementById('restart-lesson-button');
+
+// New three-button system elements
+const hardButton = document.getElementById('hard-button');
+const mediumButton = document.getElementById('medium-button');
+const easyButton = document.getElementById('easy-button');
 
 // --- TUTORIAL MODAL ELEMENTS ---
 const tutorialLink = document.getElementById('tutorial-link');
@@ -99,8 +102,9 @@ function showMainApp() {
     mainApp.style.display = 'flex';
     mainApp.style.flexDirection = 'column';
     mainApp.style.alignItems = 'center';
-    didNotKnowButton.style.display = '';
-    knewItButton.style.display = '';
+    hardButton.style.display = '';
+    mediumButton.style.display = '';
+    easyButton.style.display = '';
 }
 
 function showSetupScreen() {
@@ -117,8 +121,8 @@ function shuffleArray(array) {
 
 function displayCard(card) {
     currentCard = card;
-    cardFrontText.textContent = card.english; // English on the front
-    cardBackText.textContent = card.portuguese; // Other language on the back
+    cardFrontText.textContent = card.english;
+    cardBackText.textContent = card.portuguese;
     flashcard.classList.remove('is-flipped');
 }
 
@@ -132,21 +136,36 @@ function showNextCard() {
             currentCard = null;
             cardFrontText.textContent = "Parabéns! 🎉";
             cardBackText.textContent = "You've learned all the cards!";
-            didNotKnowButton.style.display = 'none';
-            knewItButton.style.display = 'none';
+            hardButton.style.display = 'none';
+            mediumButton.style.display = 'none';
+            easyButton.style.display = 'none';
             restartLessonButton.style.display = 'block';
         }
         cardContainer.classList.remove('hiding');
     }, 200);
 }
 
-function handleAnswer(knewIt) {
+// NEW "three-pile" answer logic
+function handleAnswer(level) {
     if (!currentCard) return;
-    if (!knewIt) {
-        sessionDeck.push(currentCard);
+
+    switch (level) {
+        case 'easy':
+            // Card is correct, do nothing (it's removed from the session)
+            break;
+        case 'medium':
+            // Card is okay, add it to the very end of the deck
+            sessionDeck.push(currentCard);
+            break;
+        case 'hard':
+            // Card is difficult, re-insert it 3 cards from now to see it again soon
+            const insertIndex = Math.min(sessionDeck.length, 3);
+            sessionDeck.splice(insertIndex, 0, currentCard);
+            break;
     }
     showNextCard();
 }
+
 
 function startLesson() {
     sessionDeck = [...fullDeck];
@@ -188,7 +207,7 @@ async function loadCardData(url, deckName = null) {
             const columns = row.split('\t');
             if (columns.length >= 2) {
                 const english = columns[0].trim();
-                const portuguese = columns[1].trim(); // This variable holds the second language (Portuguese, French, etc.)
+                const portuguese = columns[1].trim();
                 return { english, portuguese };
             }
             return null;
@@ -249,8 +268,11 @@ flashcard.addEventListener('click', () => {
     }
 });
 
-didNotKnowButton.addEventListener('click', () => handleAnswer(false));
-knewItButton.addEventListener('click', () => handleAnswer(true));
+// New event listeners for the three-button system
+hardButton.addEventListener('click', () => handleAnswer('hard'));
+mediumButton.addEventListener('click', () => handleAnswer('medium'));
+easyButton.addEventListener('click', () => handleAnswer('easy'));
+
 restartLessonButton.addEventListener('click', startLesson);
 
 recentDecksContainer.addEventListener('click', (event) => {
