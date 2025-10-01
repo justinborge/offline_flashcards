@@ -1,0 +1,192 @@
+/* Import a clean, modern font from Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+
+/* Basic Reset and Background */
+body {
+    margin: 0;
+    font-family: 'Roboto', sans-serif;
+    background-color: #121212; /* Darker background */
+    color: white;
+    display: flex;
+    flex-direction: column; /* Allow vertical stacking */
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 1rem;
+    box-sizing: border-box;
+}
+
+/* Container to hold the card and provide 3D perspective */
+.card-container {
+    perspective: 1000px;
+    margin-bottom: 2rem;
+    transition: opacity 0.2s ease-in-out; /* For our fade effect */
+}
+
+/* A class to trigger the fade-out */
+.card-container.hiding {
+    opacity: 0;
+}
+
+/* The flashcard itself */
+.flashcard {
+    width: 320px;
+    max-width: 100%;
+    height: 200px;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.7s;
+    cursor: pointer;
+}
+
+.flashcard.is-flipped {
+    transform: rotateY(180deg);
+}
+
+/* Styles for both front and back faces of the card */
+.card-face {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    border-radius: 16px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    font-size: 2rem;
+    font-weight: bold;
+    padding: 1.5rem;
+    box-sizing: border-box;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+.card-face p {
+    margin: 0;
+}
+
+/* Style for the front of the card */
+.card-front {
+    background: linear-gradient(135deg, #007BFF, #0056b3);
+}
+
+/* Style for the back of the card, initially hidden */
+.card-back {
+    background: linear-gradient(135deg, #17a2b8, #117a8b); /* New color */
+    transform: rotateY(180deg);
+}
+
+/* New Button Styles */
+.button-container {
+    display: flex;
+    gap: 1rem; /* Space between buttons */
+    width: 320px;
+    max-width: 100%;
+}
+
+button {
+    flex-grow: 1; /* Make buttons share space equally */
+    padding: 16px;
+    border: none;
+    border-radius: 12px;
+    color: white;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.4);
+}
+
+#did-not-know-button {
+    background-color: #dc3545; /* Red for "didn't know" */
+}
+
+#knew-it-button {
+    background-color: #28a745; /* Green for "knew it" */
+}
+
+/* Setup Screen Styles */
+.setup-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 2rem;
+    background-color: #2a2a2a;
+    border-radius: 16px;
+    max-width: 500px;
+    width: 90%;
+}
+
+.setup-container h1 {
+    margin-top: 0;
+}
+
+#sheet-url-input {
+    width: 100%;
+    padding: 12px;
+    margin: 1rem 0;
+    border-radius: 8px;
+    border: 1px solid #555;
+    background-color: #333;
+    color: white;
+    font-size: 1rem;
+}
+
+#load-deck-button {
+    width: 100%;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    background-color: #007BFF;
+    color: white;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.link-button {
+    background: none;
+    border: none;
+    color: #007BFF;
+    text-decoration: underline;
+    cursor: pointer;
+    margin-top: 2rem;
+    font-size: 0.9rem;
+}
+
+/* New rule to handle the end of the game state */
+#main-app.game-over .button-container {
+    display: none;
+}
+
+/* Optional: Adjust spacing for the Change Deck button when game is over */
+#main-app.game-over .link-button {
+    margin-top: 1rem;
+}
+
+#restart-lesson-button {
+    width: 320px;
+    max-width: 100%;
+    padding: 16px;
+    margin-bottom: -1rem; /* Adjusts spacing with the link below */
+    border: none;
+    border-radius: 12px;
+    background-color: #007BFF; /* A neutral blue color */
+    color: white;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+#restart-lesson-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.4);
+}
