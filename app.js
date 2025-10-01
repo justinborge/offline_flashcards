@@ -167,7 +167,7 @@ function showNextCard() {
         } else {
             // End of lesson logic
             currentCard = null;
-            cardFrontText.textContent = "Parabéns! 🎉";
+            cardFrontText.textContent = "You've learned all the cards! 🎉";
             cardBackText.textContent = "You've learned all the cards!";
             didNotKnowButton.style.display = 'none';
             knewItButton.style.display = 'none';
