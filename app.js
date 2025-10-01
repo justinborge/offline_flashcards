@@ -416,10 +416,50 @@ nextArrow.addEventListener('click', () => changeSlide(1));
 tutorialModal.addEventListener('click', (event) => { if (event.target === tutorialModal) closeTutorial(); });
 
 document.addEventListener('keydown', (event) => {
+    // --- 1. Handle Tutorial Modal Controls ---
     if (tutorialModal.style.display === 'flex') {
         if (event.key === 'ArrowLeft') changeSlide(-1);
         else if (event.key === 'ArrowRight') changeSlide(1);
         else if (event.key === 'Escape') closeTutorial();
+        return;
+    }
+
+    // --- 2. Ignore Keys While Typing ---
+    if (event.target.tagName === 'INPUT' || nameDeckModal.style.display === 'flex') {
+        return;
+    }
+
+    // --- 3. Handle Main App Flashcard Controls ---
+    if (mainApp.style.display === 'flex' && currentCardData) {
+        // Use the Spacebar to flip the current card.
+        if (event.key === ' ') {
+            event.preventDefault();
+            if (activeCardElement) {
+                activeCardElement.classList.toggle('is-flipped');
+            }
+            return;
+        }
+
+        // A variable to hold which button to click.
+        let action = null;
+        
+        // Check which arrow key was pressed.
+        switch (event.key) {
+            case 'ArrowLeft':
+                action = () => easyButton.click();
+                break;
+            case 'ArrowDown':
+                action = () => mediumButton.click();
+                break;
+            case 'ArrowRight':
+                action = () => hardButton.click();
+                break;
+        }
+
+        // If an arrow key was pressed, perform the action immediately without flipping.
+        if (action && activeCardElement && !isAnimating) {
+            action();
+        }
     }
 });
 
