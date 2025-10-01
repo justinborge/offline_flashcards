@@ -208,10 +208,16 @@ button:active {
 }
 
 /* New: The card that is actively swiping out */
-.flashcard.swiping-active {
-    /* Use a specific, quick transition for the swipe out */
-    transition: transform 0.25s ease-in, opacity 0.25s ease-in; 
-    transform: translateX(120%) rotate(30deg); /* Swipes out aggressively to the right */
+.flashcard.swiping-left {
+    transition: transform 0.25s ease-in, opacity 0.25s ease-in;
+    transform: translateX(-120%) rotate(-30deg); /* Swipes out to the LEFT */
+    opacity: 0;
+    z-index: 3; /* Ensure it's on top as it leaves */
+}
+
+.flashcard.swiping-right {
+    transition: transform 0.25s ease-in, opacity 0.25s ease-in;
+    transform: translateX(120%) rotate(30deg); /* Swipes out to the RIGHT */
     opacity: 0;
     z-index: 3; /* Ensure it's on top as it leaves */
 }
@@ -425,4 +431,25 @@ button:active {
 
 .link-button-inline:hover {
     color: var(--color-link-hover);
+}
+
+/* --- Keyboard Shortcut Cues --- */
+.key-cue {
+    display: none; /* Hidden by default on all devices */
+    font-size: 0.8rem;
+    color: var(--color-text-subtle);
+    margin-top: 6px;
+    font-weight: 500;
+    text-align: center;
+}
+
+#flip-cue {
+    margin-bottom: 1rem;
+}
+
+/* Show the cues ONLY on devices that support hover (i.e., desktops with a mouse) */
+@media (hover: hover) {
+    .key-cue {
+        display: block;
+    }
 }

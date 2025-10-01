@@ -142,7 +142,7 @@ function showCompletionScreen() {
 
 
 // The new core function for advancing to the next card with simultaneous animations
-function advanceCards() {
+function advanceCards(direction = 'right') {
     if (isAnimating) return; // Prevent multiple clicks during animation
     isAnimating = true;
 
@@ -157,8 +157,9 @@ function advanceCards() {
     const newDataForNext = sessionDeck[0];
 
     // --- ANIMATION START ---
-    // 1. Start the current active card swiping out
-    cardSwipingOut.classList.add('swiping-active');
+    // 1. Start the current active card swiping out in the correct direction
+    const swipeClass = direction === 'left' ? 'swiping-left' : 'swiping-right';
+    cardSwipingOut.classList.add(swipeClass);
     cardSwipingOut.classList.remove('is-active');
     cardSwipingOut.classList.remove('is-flipped'); // Ensure it flips back if it was showing the back
 
@@ -171,7 +172,7 @@ function advanceCards() {
     // --- ANIMATION END (after swipe-out transition) ---
     setTimeout(() => {
         // 3. Reset the swiped-out card and prepare it to be the new 'next' card
-        cardSwipingOut.classList.remove('swiping-active');
+        cardSwipingOut.classList.remove('swiping-left', 'swiping-right'); // Remove both possible classes
         cardSwipingOut.classList.add('is-next');
         cardSwipingOut.style.display = 'block'; // Make sure it's visible again
 
@@ -191,7 +192,7 @@ function advanceCards() {
         populateCard(nextCardElement, newDataForNext);
 
         isAnimating = false; // Animation finished, re-enable clicks
-    }, 250); // This delay MUST match the 'swiping-active' CSS transition duration
+    }, 250); // This delay MUST match the CSS transition duration
 }
 
 function handleAnswer(level) {
@@ -206,7 +207,63 @@ function handleAnswer(level) {
     }
     // 'easy' cards are not put back in the deck
 
-    advanceCards();
+    // Determine the swipe direction based on the answer level
+    const direction = (level === 'easy') ? 'left' : 'right';
+    advanceCards(direction);
+}
+
+// The new core function for advancing to the next card with simultaneous animations
+function advanceCards(direction = 'right') {
+    if (isAnimating) return; // Prevent multiple clicks during animation
+    isAnimating = true;
+
+    // The card that is currently active and will swipe out
+    const cardSwipingOut = activeCardElement;
+    // The card that is currently 'next' and will zoom into active position
+    const cardZoomingIn = nextCardElement;
+
+    // Data for the card that will become the *new* active card
+    const newDataForActive = sessionDeck.shift(); 
+    // Data for the card that will become the *new* next card (peek from deck)
+    const newDataForNext = sessionDeck[0];
+
+    // --- ANIMATION START ---
+    // 1. Start the current active card swiping out in the correct direction
+    const swipeClass = direction === 'left' ? 'swiping-left' : 'swiping-right';
+    cardSwipingOut.classList.add(swipeClass);
+    cardSwipingOut.classList.remove('is-active');
+    cardSwipingOut.classList.remove('is-flipped'); // Ensure it flips back if it was showing the back
+
+    // 2. Start the next card zooming into the active position
+    if (cardZoomingIn) {
+        cardZoomingIn.classList.remove('is-next');
+        cardZoomingIn.classList.add('is-active');
+    }
+
+    // --- ANIMATION END (after swipe-out transition) ---
+    setTimeout(() => {
+        // 3. Reset the swiped-out card and prepare it to be the new 'next' card
+        cardSwipingOut.classList.remove('swiping-left', 'swiping-right'); // Remove both possible classes
+        cardSwipingOut.classList.add('is-next');
+        cardSwipingOut.style.display = 'block'; // Make sure it's visible again
+
+        // 4. Update the references for active/next cards and current card data
+        activeCardElement = cardZoomingIn; // The card that just zoomed in is now active
+        nextCardElement = cardSwipingOut; // The card that swiped out is now the 'next' card in the back
+        currentCardData = newDataForActive; // The data for the current active card
+
+        // 5. Check if the deck is finished
+        if (!currentCardData) {
+            showCompletionScreen();
+            isAnimating = false;
+            return;
+        }
+
+        // 6. Populate the new 'next' card (the one in the back)
+        populateCard(nextCardElement, newDataForNext);
+
+        isAnimating = false; // Animation finished, re-enable clicks
+    }, 250); // This delay MUST match the CSS transition duration
 }
 
 function startLesson() {
@@ -431,8 +488,8 @@ document.addEventListener('keydown', (event) => {
 
     // --- 3. Handle Main App Flashcard Controls ---
     if (mainApp.style.display === 'flex' && currentCardData) {
-        // Use the Spacebar to flip the current card.
-        if (event.key === ' ') {
+        // Use the Spacebar OR Up Arrow to flip the current card.
+        if (event.key === ' ' || event.key === 'ArrowUp') {
             event.preventDefault();
             if (activeCardElement) {
                 activeCardElement.classList.toggle('is-flipped');
