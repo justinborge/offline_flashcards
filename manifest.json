@@ -1,19 +1,19 @@
 {
-  "name": "Offline Flashcards",
-  "short_name": "Flashcards",
+  "name": "Viajo Flashcards",
+  "short_name": "Viajo",
   "start_url": ".",
   "display": "standalone",
-  "background_color": "#121212",
-  "theme_color": "#007BFF",
-  "description": "A simple offline-capable flashcard app",
+  "background_color": "#F4F6F8",
+  "theme_color": "#115895",
+  "description": "A simple offline-capable flashcard app powered by Viajo.",
   "icons": [
     {
-      "src": "icon-192x192.png",
+      "src": "assets/icon-192x192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "icon-512x512.png",
+      "src": "assets/logo-icon.png",
       "sizes": "512x512",
       "type": "image/png"
     }

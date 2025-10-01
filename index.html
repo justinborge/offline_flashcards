@@ -3,22 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Offline Flashcards</title>
+    <title>Viajo Flashcards</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wght@8..144,400;8..144,700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
-    <!-- ADD THIS LINE FOR iPHONES -->
     <link rel="apple-touch-icon" href="icon-192x192.png">
 </head>
 <body>
 
     <div id="setup-screen" class="setup-container">
-        <h1>Welcome to Flashcards</h1>
+        <img src="assets/logo-wordmark.png" alt="Viajo Logo" class="welcome-logo">
         <p>To get started, publish a Google Sheet to the web as a CSV and paste the URL below.</p>
         <input type="text" id="sheet-url-input" placeholder="Paste your Google Sheet URL here">
         <button id="load-deck-button">Load Deck</button>
+        <a href="https://getviajo.com" target="_blank" class="viajo-link">Powered by getviajo.com</a>
     </div>
 
     <div id="main-app" style="display: none;">
+        <header class="app-header">
+            <img src="assets/logo-wordmark.png" alt="Viajo Logo" class="header-logo">
+        </header>
+
         <div class="card-container" id="card-container">
             <div class="flashcard" id="flashcard">
                 <div class="card-face card-front">
@@ -31,8 +38,8 @@
         </div>
         
         <div class="button-container">
-            <button id="did-not-know-button">👎 I Didn't Know</button>
-            <button id="knew-it-button">👍 I Knew It</button>
+            <button id="did-not-know-button" class="button-no">👎 I Didn't Know</button>
+            <button id="knew-it-button" class="button-yes">👍 I Knew It</button>
         </div>
 
         <button id="restart-lesson-button" style="display: none;">🔄 Restart Lesson</button>

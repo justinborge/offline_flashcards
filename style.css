@@ -1,41 +1,190 @@
-/* Import a clean, modern font from Google Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+/* --- Variable Definitions --- */
+:root {
+    --font-main: "Roboto Flex", sans-serif;
+    
+    /* Light Mode Colors */
+    --color-primary: #115895;
+    --color-link: #198799;
+    --color-link-hover: #DC4A0B;
+    --color-background: #F4F6F8;
+    --color-surface: #FFFFFF;
+    --color-text: #212529;
+    --color-text-subtle: #6c757d;
+    --color-border: #dee2e6;
+    --color-button-text: #FFFFFF;
+    --color-no: #e74c3c;
+    --color-yes: #2ecc71;
+}
 
-/* Basic Reset and Background */
-body {
+@media (prefers-color-scheme: dark) {
+    :root {
+        /* Dark Mode Colors */
+        --color-primary: #115895; /* Stays the same as per your spec */
+        --color-link: #198799;    /* Stays the same */
+        --color-link-hover: #DC4A0B; /* Stays the same */
+        --color-background: #121212;
+        --color-surface: #1E1E1E;
+        --color-text: #EAEAEA;
+        --color-text-subtle: #a0a0a0;
+        --color-border: #444444;
+        --color-no: #c0392b;
+        --color-yes: #27ae60;
+    }
+}
+
+/* --- General Styles & Resets --- */
+* {
+    box-sizing: border-box;
     margin: 0;
-    font-family: 'Roboto', sans-serif;
-    background-color: #121212; /* Darker background */
-    color: white;
+    padding: 0;
+}
+
+body {
+    font-family: var(--font-main);
+    background-color: var(--color-background);
+    color: var(--color-text);
     display: flex;
-    flex-direction: column; /* Allow vertical stacking */
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    padding: 1rem;
-    box-sizing: border-box;
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* Container to hold the card and provide 3D perspective */
+/* --- Screen Containers --- */
+.setup-container, #main-app {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-width: 400px;
+    padding: 2rem;
+    text-align: center;
+}
+
+/* --- Header & Logos --- */
+.welcome-logo {
+    max-width: 200px;
+    margin-bottom: 1.5rem;
+}
+
+.app-header {
+    margin-bottom: 1rem;
+}
+
+.header-logo {
+    max-width: 120px;
+    height: auto;
+}
+
+/* --- Typography --- */
+h1 {
+    margin-bottom: 0.5rem;
+}
+
+p {
+    margin-bottom: 1.5rem;
+    color: var(--color-text-subtle);
+    line-height: 1.6;
+}
+
+.viajo-link {
+    margin-top: 2rem;
+    font-size: 0.9rem;
+}
+
+/* --- Forms & Buttons --- */
+input[type="text"] {
+    width: 100%;
+    padding: 12px 15px;
+    margin-bottom: 1rem;
+    border-radius: 8px;
+    border: 1px solid var(--color-border);
+    background-color: var(--color-surface);
+    color: var(--color-text);
+    font-family: var(--font-main);
+    font-size: 1rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+input[type="text"]:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(17, 88, 149, 0.2);
+}
+
+button {
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px; /* Reduced padding */
+    font-family: var(--font-main);
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+button:active {
+    transform: scale(0.98);
+}
+
+#load-deck-button, #restart-lesson-button {
+    width: 100%;
+    background-color: var(--color-primary);
+    color: var(--color-button-text);
+}
+
+.button-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    width: 100%;
+    margin-top: 1.5rem;
+}
+
+.button-no {
+    background-color: var(--color-no);
+    color: var(--color-button-text);
+    font-weight: 400; /* Set to normal weight */
+}
+
+.button-yes {
+    background-color: var(--color-yes);
+    color: var(--color-button-text);
+    font-weight: 400; /* Set to normal weight */
+}
+
+.link-button, .viajo-link {
+    background: none;
+    color: var(--color-link);
+    text-decoration: none;
+    margin-top: 1.5rem;
+    font-weight: 400; /* Ensure normal weight */
+}
+
+.link-button:hover, .viajo-link:hover {
+    color: var(--color-link-hover);
+    text-decoration: underline;
+}
+
+/* --- Flashcard Styling --- */
 .card-container {
     perspective: 1000px;
-    margin-bottom: 2rem;
-    transition: opacity 0.2s ease-in-out; /* For our fade effect */
+    width: 100%;
+    height: 250px;
+    transition: opacity 0.2s ease-in-out;
 }
 
-/* A class to trigger the fade-out */
 .card-container.hiding {
     opacity: 0;
 }
 
-/* The flashcard itself */
 .flashcard {
-    width: 320px;
-    max-width: 100%;
-    height: 200px;
+    width: 100%;
+    height: 100%;
     position: relative;
     transform-style: preserve-3d;
-    transition: transform 0.7s;
+    transition: transform 0.6s;
     cursor: pointer;
 }
 
@@ -43,150 +192,29 @@ body {
     transform: rotateY(180deg);
 }
 
-/* Styles for both front and back faces of the card */
 .card-face {
     position: absolute;
     width: 100%;
     height: 100%;
     backface-visibility: hidden;
-    border-radius: 16px;
+    -webkit-backface-visibility: hidden; /* Safari */
     display: flex;
     justify-content: center;
     align-items: center;
-    text-align: center;
-    font-size: 2rem;
-    font-weight: bold;
-    padding: 1.5rem;
-    box-sizing: border-box;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    padding: 20px;
+    border-radius: 12px;
+    background-color: var(--color-surface);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    border: 1px solid var(--color-border);
 }
 
 .card-face p {
+    font-size: 1.5rem;
+    color: var(--color-text);
     margin: 0;
+    font-weight: 400; /* Sets font weight to normal */
 }
 
-/* Style for the front of the card */
-.card-front {
-    background: linear-gradient(135deg, #007BFF, #0056b3);
-}
-
-/* Style for the back of the card, initially hidden */
 .card-back {
-    background: linear-gradient(135deg, #17a2b8, #117a8b); /* New color */
     transform: rotateY(180deg);
-}
-
-/* New Button Styles */
-.button-container {
-    display: flex;
-    gap: 1rem; /* Space between buttons */
-    width: 320px;
-    max-width: 100%;
-}
-
-button {
-    flex-grow: 1; /* Make buttons share space equally */
-    padding: 16px;
-    border: none;
-    border-radius: 12px;
-    color: white;
-    font-size: 1rem;
-    font-weight: bold;
-    cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-}
-
-button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(0,0,0,0.4);
-}
-
-#did-not-know-button {
-    background-color: #dc3545; /* Red for "didn't know" */
-}
-
-#knew-it-button {
-    background-color: #28a745; /* Green for "knew it" */
-}
-
-/* Setup Screen Styles */
-.setup-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    padding: 2rem;
-    background-color: #2a2a2a;
-    border-radius: 16px;
-    max-width: 500px;
-    width: 90%;
-}
-
-.setup-container h1 {
-    margin-top: 0;
-}
-
-#sheet-url-input {
-    width: 100%;
-    padding: 12px;
-    margin: 1rem 0;
-    border-radius: 8px;
-    border: 1px solid #555;
-    background-color: #333;
-    color: white;
-    font-size: 1rem;
-}
-
-#load-deck-button {
-    width: 100%;
-    padding: 12px 24px;
-    border: none;
-    border-radius: 8px;
-    background-color: #007BFF;
-    color: white;
-    font-size: 1rem;
-    font-weight: bold;
-    cursor: pointer;
-}
-
-.link-button {
-    background: none;
-    border: none;
-    color: #007BFF;
-    text-decoration: underline;
-    cursor: pointer;
-    margin-top: 2rem;
-    font-size: 0.9rem;
-}
-
-/* New rule to handle the end of the game state */
-#main-app.game-over .button-container {
-    display: none;
-}
-
-/* Optional: Adjust spacing for the Change Deck button when game is over */
-#main-app.game-over .link-button {
-    margin-top: 1rem;
-}
-
-#restart-lesson-button {
-    width: 320px;
-    max-width: 100%;
-    padding: 16px;
-    margin-bottom: -1rem; /* Adjusts spacing with the link below */
-    border: none;
-    border-radius: 12px;
-    background-color: #007BFF; /* A neutral blue color */
-    color: white;
-    font-size: 1rem;
-    font-weight: bold;
-    cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-}
-
-#restart-lesson-button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(0,0,0,0.4);
 }

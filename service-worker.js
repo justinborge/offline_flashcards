@@ -6,8 +6,9 @@ const APP_SHELL_URLS = [
   'index.html',
   'style.css',
   'app.js',
-  'icon-192x192.png',
-  'icon-512x512.png'
+  'assets/icon-192x192.png',
+  'assets/logo-icon.png',
+  'assets/logo-wordmark.png'
 ];
 
 // 1. Install the service worker and cache the app shell
