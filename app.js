@@ -568,10 +568,16 @@ tutorialModal.addEventListener('click', (event) => { if (event.target === tutori
 document.addEventListener('keydown', (event) => {
     // --- 1. Handle Tutorial Modal Controls ---
     if (tutorialModal.style.display === 'flex') {
-        if (event.key === 'ArrowLeft') changeSlide(-1);
-        else if (event.key === 'ArrowRight') changeSlide(1);
-        else if (event.key === 'Escape') closeTutorial();
-        return;
+        if (event.key === 'ArrowLeft') {
+            changeSlide(-1);
+        } else if (event.key === 'ArrowRight') {
+            changeSlide(1);
+        } else if (event.key === 'Escape' || event.key === ' ' || event.key === 'Enter') {
+            // This prevents the spacebar from also scrolling the page or re-triggering buttons
+            event.preventDefault(); 
+            closeTutorial();
+        }
+        return; // This ensures no other keydown actions (like flipping a card) run
     }
 
     // --- 2. Ignore Keys While Typing ---

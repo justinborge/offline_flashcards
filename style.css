@@ -440,6 +440,12 @@ button:active {
     color: var(--color-link-hover);
 }
 
+.link-button-inline:focus-visible {
+    outline: none; /* Removes the default oval outline */
+    border-radius: 4px; /* Creates a rectangle with slightly rounded corners */
+    box-shadow: 0 0 0 2px var(--color-background), 0 0 0 4px var(--color-primary); /* Adds a clean, bigger outline */
+}
+
 /* --- Keyboard Shortcut Cues --- */
 .key-cue {
     display: none; /* Hidden by default on all devices */
