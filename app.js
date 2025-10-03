@@ -404,6 +404,11 @@ async function loadCardData(url, deckName = null) {
 
 // --- INITIALIZATION & EVENT LISTENERS ---
 function init() {
+    // Check for an identified user from the main GetViajo site
+    const identifiedUserEmail = localStorage.getItem('getviajo_identified_user_email');
+    if (identifiedUserEmail) {
+        posthog.identify(identifiedUserEmail);
+    }
     renderRecentDecks();
     const savedUrl = localStorage.getItem('spreadsheetUrl');
     if (savedUrl) {
@@ -419,6 +424,7 @@ function init() {
 const handleDeckLoad = () => {
     const url = urlInput.value.trim();
     if (url) {
+        posthog.capture('Deck Loaded');
         localStorage.setItem('spreadsheetUrl', url);
         loadCardData(url);
         urlInput.value = '';
@@ -445,6 +451,9 @@ randomizeToggleButton.addEventListener('click', (event) => {
     // Toggle the boolean state
     isRandomizeEnabled = !isRandomizeEnabled;
     
+    // Capture the event with its current state
+    posthog.capture('Randomize Toggled', { enabled: isRandomizeEnabled });
+
     // Toggle the visual 'is-active' class on the button
     randomizeToggleButton.classList.toggle('is-active', isRandomizeEnabled);
 });
@@ -540,7 +549,11 @@ function showSlide(index) {
 }
 
 function changeSlide(direction) { showSlide(currentSlideIndex + direction); }
-function openTutorial() { showSlide(0); tutorialModal.style.display = 'flex'; }
+function openTutorial() { 
+    posthog.capture('Tutorial Viewed');
+    showSlide(0); 
+    tutorialModal.style.display = 'flex'; 
+}
 function closeTutorial() { tutorialModal.style.display = 'none'; }
 
 tutorialLink.addEventListener('click', openTutorial);
@@ -550,6 +563,7 @@ nextArrow.addEventListener('click', () => changeSlide(1));
 // --- NEW: Event Listener for the Sample Link ---
 sampleLink.addEventListener('click', (event) => {
     event.preventDefault(); // Prevents any default button/link behavior
+    posthog.capture('Sample Link Clicked');
     
     const sampleUrl = 'https://docs.google.com/spreadsheets/d/1nEUPaNaBTh52DuNo0HQtUUwSiFQh2COJKexkfzB6pQQ/edit?usp=sharing';
     
