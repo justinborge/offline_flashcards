@@ -86,6 +86,7 @@ function renderRecentDecks() {
 }
 
 function deleteRecentDeck(urlToDelete) {
+    posthog.capture('Deck Deleted');
     let decks = getRecentDecks();
     decks = decks.filter(deck => deck.url !== urlToDelete);
     localStorage.setItem('recentDecks', JSON.stringify(decks));
@@ -110,6 +111,8 @@ const errorIconSVG = `
 async function syncDeck(buttonElement) {
     const url = buttonElement.dataset.url;
     if (!url) return;
+    
+    posthog.capture('Deck Synced');
 
     // 1. Start visual feedback
     buttonElement.disabled = true;
@@ -512,7 +515,10 @@ function askForDeckName() {
 hardButton.addEventListener('click', () => handleAnswer('hard'));
 mediumButton.addEventListener('click', () => handleAnswer('medium'));
 easyButton.addEventListener('click', () => handleAnswer('easy'));
-restartLessonButton.addEventListener('click', startLesson);
+restartLessonButton.addEventListener('click', () => {
+    posthog.capture('Lesson Restarted');
+    startLesson();
+});
 
 recentDecksContainer.addEventListener('click', (event) => {
     const target = event.target;
