@@ -24,6 +24,7 @@ const cardBackTextB = document.getElementById('card-back-text-b');
 const hardButton = document.getElementById('hard-button');
 const mediumButton = document.getElementById('medium-button');
 const easyButton = document.getElementById('easy-button');
+const gameControls = document.getElementById('game-controls');
 
 // --- TUTORIAL MODAL ELEMENTS ---
 const tutorialLink = document.getElementById('tutorial-link');
@@ -61,7 +62,19 @@ function renderRecentDecks() {
     if (decks.length > 0) {
         let html = '<h3>Recent Decks</h3><ol class="recent-decks-list">';
         decks.forEach(deck => {
-            html += `<li><a href="#" data-url="${deck.url}">${deck.name}</a><button class="delete-deck-btn" data-url="${deck.url}" title="Remove this deck">&times;</button></li>`;
+            html += `
+                <li>
+                    <a href="#" data-url="${deck.url}">${deck.name}</a>
+                    <span class="deck-actions">
+                        <button class="sync-deck-btn" data-url="${deck.url}" title="Sync with Google Sheet">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+                <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+                            </svg>
+                        </button>
+                        <button class="delete-deck-btn" data-url="${deck.url}" title="Remove this deck">&times;</button>
+                    </span>
+                </li>`;
         });
         html += '</ol>';
         recentDecksContainer.innerHTML = html;
@@ -75,6 +88,58 @@ function deleteRecentDeck(urlToDelete) {
     decks = decks.filter(deck => deck.url !== urlToDelete);
     localStorage.setItem('recentDecks', JSON.stringify(decks));
     renderRecentDecks();
+}
+
+// --- DECK SYNCING LOGIC ---
+const syncIconSVG = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+        <path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+        <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+    </svg>`;
+const successIconSVG = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+        <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+    </svg>`;
+const errorIconSVG = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+        <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM5.354 4.646a.5.5 0 1 0-.708.708L7.293 8l-2.647 2.646a.5.5 0 0 0 .708.708L8 8.707l2.646 2.647a.5.5 0 0 0 .708-.708L8.707 8l2.647-2.646a.5.5 0 0 0-.708-.708L8 7.293 5.354 4.646z"/>
+    </svg>`;
+
+async function syncDeck(buttonElement) {
+    const url = buttonElement.dataset.url;
+    if (!url) return;
+
+    // 1. Start visual feedback
+    buttonElement.disabled = true;
+    buttonElement.classList.add('is-syncing');
+
+    const tsvUrl = transformGoogleSheetUrl(url);
+
+    try {
+        // 2. Fetch the new data. This request is intercepted by the service worker,
+        // which will update its offline cache with the fresh data.
+        const response = await fetch(tsvUrl, { cache: 'reload' }); // 'reload' bypasses HTTP cache
+        if (!response.ok) throw new Error('Network response not OK');
+        
+        // 3. Show success feedback
+        buttonElement.classList.remove('is-syncing');
+        buttonElement.classList.add('sync-success');
+        buttonElement.innerHTML = successIconSVG;
+
+    } catch (error) {
+        console.error('Sync failed:', error);
+        // 3b. Show error feedback
+        buttonElement.classList.remove('is-syncing');
+        buttonElement.classList.add('sync-error');
+        buttonElement.innerHTML = errorIconSVG;
+    } finally {
+        // 4. Revert the icon back to normal after a short delay
+        setTimeout(() => {
+            buttonElement.classList.remove('sync-success', 'sync-error');
+            buttonElement.innerHTML = syncIconSVG;
+            buttonElement.disabled = false;
+        }, 2000); // Reverts after 2 seconds
+    }
 }
 
 // --- URL TRANSFORMATION ---
@@ -123,21 +188,29 @@ function populateCard(cardElement, cardData) {
     }
 }
 
-// Shows the completion screen
 function showCompletionScreen() {
     currentCardData = null; // No active card
+
+    // Get the text elements for the card that's currently in front
     const frontText = activeCardElement.id === 'flashcard-a' ? cardFrontTextA : cardFrontTextB;
     const backText = activeCardElement.id === 'flashcard-a' ? cardBackTextA : cardBackTextB;
 
-    frontText.textContent = "Parabéns! 🎉";
-    backText.textContent = "You've learned all the cards!";
+    // Set the new, multi-line HTML message on the front face
+    frontText.innerHTML = `Parabéns! 🎉<br><span class="completion-subtitle">You've learned all the cards.</span>`;
+    backText.textContent = ""; // Clear the back face just in case
     
-    // Hide the back card element if it exists
-    if (nextCardElement) nextCardElement.style.display = 'none';
+    // Ensure this final card is visible, active, and not flipped
+    activeCardElement.classList.remove('is-flipped', 'is-next');
+    activeCardElement.classList.add('is-active');
+    activeCardElement.style.display = 'block';
+    
+    // Hide the other card so it doesn't peek from behind
+    if (nextCardElement) {
+        nextCardElement.style.display = 'none';
+    }
 
-    hardButton.style.display = 'none';
-    mediumButton.style.display = 'none';
-    easyButton.style.display = 'none';
+    // Hide all the game controls and show the restart button
+    gameControls.style.display = 'none';
     restartLessonButton.style.display = 'block';
 }
 
@@ -164,7 +237,6 @@ function handleAnswer(level) {
     advanceCards(direction);
 }
 
-// The core function for advancing to the next card with simultaneous animations
 function advanceCards(direction = 'right') {
     if (isAnimating) return; // Prevent multiple clicks during animation
     isAnimating = true;
@@ -179,6 +251,12 @@ function advanceCards(direction = 'right') {
     // Data for the card that will become the *new* next card (peek from deck)
     const newDataForNext = sessionDeck[0];
 
+    // *** THE FIX IS HERE ***
+    // We populate the card that is about to ZOOM IN with the next card's data *before* the animation starts.
+    if (newDataForActive) {
+        populateCard(cardZoomingIn, newDataForActive);
+    }
+    
     // --- ANIMATION START ---
     // 1. Start the current active card swiping out in the correct direction
     let swipeClass;
@@ -222,7 +300,7 @@ function advanceCards(direction = 'right') {
             return;
         }
 
-        // 6. Populate the new 'next' card (the one in the back)
+        // 6. Populate the new 'next' card (the one in the back) with the upcoming card's data
         populateCard(nextCardElement, newDataForNext);
 
         isAnimating = false; // Animation finished, re-enable clicks
@@ -264,6 +342,8 @@ function startLesson() {
     activeCardElement.classList.add('is-active'); // Set Card A as the active one
     nextCardElement.classList.add('is-next');     // Set Card B as the one in the back
     
+    // Make sure the game controls are visible and the restart button is hidden
+    gameControls.style.display = 'block';
     restartLessonButton.style.display = 'none';
     showMainApp();
 }
@@ -398,22 +478,27 @@ restartLessonButton.addEventListener('click', startLesson);
 
 recentDecksContainer.addEventListener('click', (event) => {
     const target = event.target;
-    if (target.tagName === 'A') {
+    const link = target.closest('a');
+    const deleteBtn = target.closest('.delete-deck-btn');
+    const syncBtn = target.closest('.sync-deck-btn');
+
+    if (link) {
         event.preventDefault();
-        const url = target.dataset.url;
-        const name = target.textContent;
+        const url = link.dataset.url;
+        const name = link.textContent;
         if (url) {
             localStorage.setItem('spreadsheetUrl', url);
             loadCardData(url, name);
         }
-    } else if (target.classList.contains('delete-deck-btn')) {
-        const urlToDelete = target.dataset.url;
+    } else if (deleteBtn) {
+        const urlToDelete = deleteBtn.dataset.url;
         if (urlToDelete && confirm('Are you sure you want to remove this deck?')) {
             deleteRecentDeck(urlToDelete);
         }
+    } else if (syncBtn) {
+        syncDeck(syncBtn);
     }
 });
-
 
 // --- TUTORIAL MODAL LOGIC ---
 const tutorialImages = ['assets/tutorial-1.png', 'assets/tutorial-2.png', 'assets/tutorial-3.png', 'assets/tutorial-4.png'];
@@ -465,7 +550,14 @@ document.addEventListener('keydown', (event) => {
         return;
     }
 
-    // --- 3. Handle Main App Flashcard Controls ---
+    // --- 3. NEW: Handle Completion Screen Controls ---
+    if (restartLessonButton.style.display === 'block' && event.key === 'Enter') {
+        event.preventDefault(); // Prevent any default browser action
+        restartLessonButton.click();
+        return; // Stop further execution
+    }
+
+    // --- 4. Handle Main App Flashcard Controls ---
     if (mainApp.style.display === 'flex' && currentCardData) {
         // Use the Spacebar OR Up Arrow to flip the current card.
         if (event.key === ' ' || event.key === 'ArrowUp') {

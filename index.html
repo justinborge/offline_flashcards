@@ -43,12 +43,55 @@
 
         /* --- FINAL LAYOUT & BUTTON STYLES --- */
 
+        .sync-deck-btn {
+            background: none;
+            border: none;
+            color: #999;
+            cursor: pointer;
+            font-size: 1rem; /* A bit smaller to look nice */
+            padding: 0 8px; /* Give it some space */
+            line-height: 1;
+            display: flex; /* Helps center the SVG icon */
+            align-items: center;
+        }
+        .sync-deck-btn:hover {
+            color: var(--color-link); /* Use your existing link color */
+        }
+
+        .deck-actions {
+            display: flex;
+            align-items: center;
+        }
+
+        /* Class added by JS to start the animation */
+        .sync-deck-btn.is-syncing svg {
+            animation: spin 1s linear infinite;
+        }
+        
+        /* State-specific colors for success and error */
+        .sync-deck-btn.sync-success { color: var(--color-yes); }
+        .sync-deck-btn.sync-error { color: var(--color-no); }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
         /* Reshapes the flashcard */
         .card-container {
             width: 100%;
             max-width: 500px;
             aspect-ratio: 5 / 3;
             margin-bottom: 16px;
+        }
+
+        /* This is the new rule for the completion screen */
+        .completion-subtitle {
+            font-size: 1.1rem; /* Smaller than the main text */
+            color: var(--color-text-subtle); /* Use a slightly dimmer color */
+            font-weight: 400;
+            display: block; /* Helps with spacing */
+            margin-top: 0.5rem; /* Adds a bit of space between the two lines */
         }
 
         /* Styles the main button container */
@@ -347,23 +390,25 @@
             </div>
         </div>
 
-        <div id="flip-cue" class="key-cue">spc / ↑</div>
-        
-        <div class="button-container">
-            <div class="button-wrapper">
-                <span class="button-indicator">Remove (temp)</span>
-                <button id="easy-button">Easy</button>
-                <span class="key-cue">←</span>
-            </div>
-            <div class="button-wrapper">
-                <span class="button-indicator">End of Deck</span>
-                <button id="medium-button">Medium</button>
-                <span class="key-cue">↓</span>
-            </div>
-            <div class="button-wrapper">
-                <span class="button-indicator">In a Few</span>
-                <button id="hard-button">Hard</button>
-                <span class="key-cue">→</span>
+        <div id="game-controls">
+            <div id="flip-cue" class="key-cue">spc / ↑</div>
+            
+            <div class="button-container">
+                <div class="button-wrapper">
+                    <span class="button-indicator">Remove (temp)</span>
+                    <button id="easy-button">Easy</button>
+                    <span class="key-cue">←</span>
+                </div>
+                <div class="button-wrapper">
+                    <span class="button-indicator">End of Deck</span>
+                    <button id="medium-button">Medium</button>
+                    <span class="key-cue">↓</span>
+                </div>
+                <div class="button-wrapper">
+                    <span class="button-indicator">In a Few</span>
+                    <button id="hard-button">Hard</button>
+                    <span class="key-cue">→</span>
+                </div>
             </div>
         </div>
 
