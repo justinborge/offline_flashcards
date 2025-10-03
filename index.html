@@ -194,11 +194,6 @@
                 color: #9CA3AF;
             }
 
-            #load-deck-button {
-                background-color: #115895; /* Primary brand color */
-                color: white;
-            }
-
             /* Style all links to match your brand */
             a, .link-button, #tutorial-link {
                 color: #198799; /* Link color */
@@ -281,28 +276,29 @@
 
         /* In the <style> tag in index.html */
         .input-wrapper {
-            position: relative;
+            display: flex; /* Use Flexbox for alignment */
             width: 100%;
+            gap: 8px; /* This creates the space between the elements */
             margin-bottom: 1rem;
+            align-items: center; /* Vertically align the items */
         }
 
         #sheet-url-input {
-            /* Add padding on the right to make space for the button */
-            padding-right: 45px !important; 
-            margin-bottom: 0; /* Remove margin since the wrapper now has it */
+            flex-grow: 1; /* Allow the input to fill available space */
+            margin-bottom: 0;
+            /* No longer need the extra padding on the right */
+            padding-right: 15px !important; 
         }
 
         .open-sheets-btn {
-            position: absolute;
-            right: 1px;
-            top: 1px;
-            bottom: 1px;
+            flex-shrink: 0; /* Prevent the button from shrinking */
             width: 40px;
+            height: 44px; /* Explicitly match height */
             display: flex;
             align-items: center;
             justify-content: center;
             background-color: #e9ecef; /* A light grey */
-            border-radius: 0 8px 8px 0;
+            border-radius: 8px; /* Full radius on all corners */
             color: #495057; /* A darker grey for the icon */
             transition: background-color 0.2s ease;
         }
@@ -311,13 +307,74 @@
             background-color: #dee2e6; /* Slightly darker on hover */
         }
 
-        /* Dark mode adjustments for the new button */
+        /* Dark mode adjustments for the button */
         @media (prefers-color-scheme: dark) {
             .open-sheets-btn {
                 background-color: #4B5563; /* Dark mode background */
                 color: #E5E7EB; /* Light icon */
             }
             .open-sheets-btn:hover {
+                background-color: #374151;
+            }
+        }
+
+        /* --- NEW: Final Button Group Styles --- */
+        .split-button {
+            display: flex;
+            width: 100%;
+            gap: 8px; /* This re-introduces the space between the buttons */
+            margin-bottom: 1rem;
+            align-items: center; /* Vertically align buttons */
+        }
+
+        .split-button #load-deck-button {
+            flex-grow: 1; /* This makes the main button fill the available space */
+            margin-bottom: 0;
+            /* Revert to the original primary button style */
+            background-color: var(--color-primary);
+            color: var(--color-button-text);
+            border: none;
+            border-radius: 8px; /* Full radius on all corners */
+            font-weight: 700;
+            font-size: 1rem;
+            padding: 12px 15px; /* Match input field padding */
+        }
+
+        #randomize-toggle-btn {
+            flex-shrink: 0;
+            width: 40px; /* Matches the 'Open Sheets' button width */
+            height: 44px; /* Explicit height to match */
+            padding: 8px;
+            font-size: 1.1rem; /* Makes the emoji a nice size */
+            line-height: 1;
+            /* Default 'off' state style */
+            background-color: #e9ecef;
+            color: #495057;
+            border: 1px solid transparent;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s ease;
+        }
+
+        #randomize-toggle-btn:hover {
+            background-color: #dee2e6;
+        }
+        
+        /* This is the 'ON' state */
+        #randomize-toggle-btn.is-active {
+            background-color: var(--color-primary);
+            color: white;
+        }
+        
+        /* Dark mode adjustments for the toggle */
+        @media (prefers-color-scheme: dark) {
+            #randomize-toggle-btn {
+                background-color: #4B5563;
+                color: #E5E7EB;
+            }
+            #randomize-toggle-btn:hover {
                 background-color: #374151;
             }
         }
@@ -348,7 +405,7 @@
 
         <form id="deck-load-form">
         <div class="input-wrapper">
-            <input type="text" id="sheet-url-input" placeholder="Paste your Google Sheet share link here" style="text-align:center;">
+            <input type="text" id="sheet-url-input" placeholder="Paste Google Sheet share link here" style="text-align:center;">
             
             <a href="https://sheets.google.com" target="_blank" rel="noopener noreferrer" class="open-sheets-btn" title="Open Google Sheets">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
@@ -357,7 +414,10 @@
                 </svg>
             </a>
         </div>
-        <button type="submit" id="load-deck-button">Load Deck</button>
+        <div class="split-button">
+            <button type="button" id="load-deck-button">Load Deck</button>
+            <button type="button" id="randomize-toggle-btn" title="Randomize Order">🎲</button>
+        </div>
     </form>
 
         <div id="recent-decks-container">

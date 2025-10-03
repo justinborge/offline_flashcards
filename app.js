@@ -11,6 +11,7 @@ const deckNameInput = document.getElementById('deck-name-input');
 const confirmDeckNameBtn = document.getElementById('confirm-deck-name-btn');
 const cancelDeckNameBtn = document.getElementById('cancel-deck-name-btn');
 const deckLoadForm = document.getElementById('deck-load-form');
+const randomizeToggleButton = document.getElementById('randomize-toggle-btn');
 
 // Elements for the two-card system
 const cardA = document.getElementById('flashcard-a');
@@ -43,6 +44,7 @@ let currentCardData = null; // The data object for the active card
 let activeCardElement = null; // The DOM element for the active card
 let nextCardElement = null; // The DOM element for the card in the back
 let isAnimating = false; // Prevents fast multi-clicks during animation
+let isRandomizeEnabled = false; // Controls whether the deck is shuffled
 
 // --- RECENT DECKS LOGIC ---
 function getRecentDecks() {
@@ -309,7 +311,10 @@ function advanceCards(direction = 'right') {
 
 function startLesson() {
     sessionDeck = [...fullDeck];
-    shuffleArray(sessionDeck);
+    // Only shuffle the deck if the user has enabled the option
+    if (isRandomizeEnabled) {
+        shuffleArray(sessionDeck);
+    }
     
     // Reset all card states and visibility for both cards
     cardA.className = 'flashcard'; // Remove all classes
@@ -410,14 +415,38 @@ function init() {
     }
 }
 
-deckLoadForm.addEventListener('submit', (event) => {
-    event.preventDefault();
+// This function handles the logic for loading a deck
+const handleDeckLoad = () => {
     const url = urlInput.value.trim();
     if (url) {
         localStorage.setItem('spreadsheetUrl', url);
         loadCardData(url);
         urlInput.value = '';
     }
+};
+
+// Listen for the form submission (e.g., user presses Enter in the input field)
+deckLoadForm.addEventListener('submit', (event) => {
+    event.preventDefault();
+    handleDeckLoad();
+});
+
+// We need to get the button element itself now
+const loadDeckButton = document.getElementById('load-deck-button');
+// Listen for clicks on the main "Load Deck" button
+loadDeckButton.addEventListener('click', (event) => {
+    event.preventDefault(); // Prevent any default button behavior
+    handleDeckLoad();
+});
+// Listen for clicks on the randomize toggle button
+randomizeToggleButton.addEventListener('click', (event) => {
+    event.preventDefault(); // Prevent any default button behavior
+    
+    // Toggle the boolean state
+    isRandomizeEnabled = !isRandomizeEnabled;
+    
+    // Toggle the visual 'is-active' class on the button
+    randomizeToggleButton.classList.toggle('is-active', isRandomizeEnabled);
 });
 
 changeDeckButton.addEventListener('click', () => {
@@ -501,7 +530,7 @@ recentDecksContainer.addEventListener('click', (event) => {
 });
 
 // --- TUTORIAL MODAL LOGIC ---
-const tutorialImages = ['assets/tutorial-1.png', 'assets/tutorial-2.png', 'assets/tutorial-3.png', 'assets/tutorial-4.png'];
+const tutorialImages = ['assets/tutorial-1.png', 'assets/tutorial-2.png', 'assets/tutorial-3.png', 'assets/tutorial-4.png', 'assets/tutorial-5.png'];
 let currentSlideIndex = 0;
 
 function showSlide(index) {
@@ -522,7 +551,7 @@ nextArrow.addEventListener('click', () => changeSlide(1));
 sampleLink.addEventListener('click', (event) => {
     event.preventDefault(); // Prevents any default button/link behavior
     
-    const sampleUrl = 'https://docs.google.com/spreadsheets/d/17wqT4DfH00by-1arvbCf1UeGjeWhC-YOzhDOwYMjna8/edit?gid=2137664473#gid=2137664473';
+    const sampleUrl = 'https://docs.google.com/spreadsheets/d/1nEUPaNaBTh52DuNo0HQtUUwSiFQh2COJKexkfzB6pQQ/edit?usp=sharing';
     
     urlInput.value = sampleUrl; // Fill the input field
     
