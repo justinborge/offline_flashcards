@@ -491,7 +491,7 @@ button:active {
 /* --- Mobile Tutorial Modal (Fullscreen) --- */
 @media (max-width: 600px) {
 
-    .modal-content {
+    #tutorial-modal .modal-content {
         width: 100vw;
         height: 100vh;
         border-radius: 0;
@@ -551,7 +551,7 @@ button:active {
     }
 
     /* Using a more specific selector to force the button to move */
-    .modal-content .modal-close-button {
+    #tutorial-modal .modal-close-button {
         color: white;
         background-color: rgba(0, 0, 0, 0.4);
         border-radius: 50%;
