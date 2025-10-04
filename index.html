@@ -355,13 +355,10 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: background-color 0.2s ease;
+            /* We've added 'color' to the transition for a smoother emoji color change */
+            transition: background-color 0.2s ease, color 0.2s ease; 
         }
 
-        #randomize-toggle-btn:hover {
-            background-color: #dee2e6;
-        }
-        
         /* This is the 'ON' state */
         #randomize-toggle-btn.is-active {
             background-color: var(--color-primary);
@@ -373,9 +370,6 @@
             #randomize-toggle-btn {
                 background-color: #4B5563;
                 color: #E5E7EB;
-            }
-            #randomize-toggle-btn:hover {
-                background-color: #374151;
             }
         }
 
