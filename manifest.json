@@ -5,7 +5,7 @@
   "display": "standalone",
   "background_color": "#F4F6F8",
   "theme_color": "#115895",
-  "description": "A simple offline-capable flashcard app powered by Viajo.",
+  "description": "A simple offline-capable flashcard app powered by GetViajo.com",
   "icons": [
     {
       "src": "assets/icon-192x192.png",
