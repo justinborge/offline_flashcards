@@ -411,25 +411,23 @@ async function loadCardData(url, deckName = null) {
             row1_isHeader = headerKeywords.some(kw => row1_lower.includes(kw));
         }
 
-        // Now, decide where data starts and if we have a title
-        if (row1_isHeader && !row0_isHeader) {
-            // Case 1: Title in Row 0, Header in Row 1 (User's Example)
-            // Use cell A1 as the suggested name
-            const firstCell = rows[0].split('\t')[0].trim();
-            if (firstCell) {
-                suggestedName = firstCell;
-            }
-            dataRows = rows.slice(2); // Data starts at row 2 (index 2)
-        } else if (row0_isHeader) {
-            // Case 2: Header in Row 0, No Title
-            dataRows = rows.slice(1); // Data starts at row 1
+        // --- MODIFIED LOGIC ---
+        if (row0_isHeader) {
+            // Case 1: Header in Row 0.
+            dataRows = rows.slice(1);
             // suggestedName remains "My Deck"
+        } else if (row1_isHeader) {
+            // Case 2: Title in Row 0, Header in Row 1.
+            dataRows = rows.slice(2);
+            suggestedName = rows[0].split('\t')[0].trim() || "My Deck"; // Get title from A1
         } else {
-            // Case 3: No headers found. Assume all data, no title.
+            // Case 3: No headers found.
+            // Assume data starts at Row 0, AND use A1 as suggested name.
+            // This handles the sheet from your screenshot.
             dataRows = rows;
-            // suggestedName remains "My Deck"
+            suggestedName = rows[0].split('\t')[0].trim() || "My Deck";
         }
-        // --- END: NEW LOGIC ---
+        // --- END: MODIFIED LOGIC ---
 
         // Process data rows
         fullDeck = dataRows.map(row => {
@@ -479,42 +477,14 @@ function init() {
     if (identifiedUserEmail) {
         posthog.identify(identifiedUserEmail);
     }
-    
-    // --- NEW: Check for URL Parameter ---
-    // We check for a 'sheetUrl' parameter in the URL *first*.
-    // This allows the redirect from the email to pre-load a deck.
-    const params = new URLSearchParams(window.location.search);
-    const urlFromParam = params.get('sheetUrl');
-
-    if (urlFromParam) {
-        // Found a URL parameter.
-        console.log('Found sheetUrl parameter, auto-loading deck...');
-        
-        // 1. Set the input's value (so handleDeckLoad can read it)
-        urlInput.value = urlFromParam;
-        
-        // 2. Trigger the load sequence automatically.
-        // This will show the "Loading..." screen, ask for a deck name,
-        // and start the lesson. A true one-click flow.
-        handleDeckLoad();
-        
-        // 3. Clean the URL in the browser bar so it's not reused on refresh
-        // We use replaceState to do this without reloading the page.
-        window.history.replaceState(null, '', window.location.pathname);
-
+    renderRecentDecks();
+    const savedUrl = localStorage.getItem('spreadsheetUrl');
+    if (savedUrl) {
+        const recentDecks = getRecentDecks();
+        const savedDeck = recentDecks.find(deck => deck.url === savedUrl);
+        loadCardData(savedUrl, savedDeck ? savedDeck.name : null);
     } else {
-        // --- ORIGINAL BEHAVIOR: No URL parameter ---
-        // Load from localStorage or show the setup screen.
-        console.log('No sheetUrl parameter, checking localStorage.');
-        renderRecentDecks();
-        const savedUrl = localStorage.getItem('spreadsheetUrl');
-        if (savedUrl) {
-            const recentDecks = getRecentDecks();
-            const savedDeck = recentDecks.find(deck => deck.url === savedUrl);
-            loadCardData(savedUrl, savedDeck ? savedDeck.name : null);
-        } else {
-            showSetupScreen();
-        }
+        showSetupScreen();
     }
 }
 
