@@ -460,22 +460,33 @@ async function loadCardData(url, deckName = null, nameFromParam = null) {
 
 // --- INITIALIZATION & EVENT LISTENERS ---
 function init() {
-    // Check for an identified user from the main GetViajo site
-    const identifiedUserEmail = localStorage.getItem('getviajo_identified_user_email');
-    if (identifiedUserEmail) {
-        posthog.identify(identifiedUserEmail);
-    }
-    
-    // --- NEW: Check for URL Parameter ---
-    // We check for a 'sheetUrl' parameter in the URL *first*.
-    // This allows the redirect from the email to pre-load a deck.
     const params = new URLSearchParams(window.location.search);
+
+    // --- NEW IDENTITY LOGIC ---
+    // 1. Check for an 'email' param from the redirect
+    const emailFromParam = params.get('email');
+    if (emailFromParam) {
+        console.log('Identifying user from URL parameter:', emailFromParam);
+        posthog.identify(emailFromParam);
+        // Save it to THIS domain's localStorage for all future PWA sessions
+        localStorage.setItem('getviajo_identified_user_email', emailFromParam);
+
+    // 2. If no param, check localStorage (for returning PWA users)
+    } else {
+        const identifiedUserEmail = localStorage.getItem('getviajo_identified_user_email');
+        if (identifiedUserEmail) {
+            console.log('Identifying user from localStorage:', identifiedUserEmail);
+            posthog.identify(identifiedUserEmail);
+        }
+    }
+    // --- END NEW IDENTITY LOGIC ---
+
+    // --- Deck Loading Logic ---
     const urlFromParam = params.get('sheetUrl');
-    
-    // --- MODIFIED: Get the new 'deckName' parameter. It will be null if not present. ---
     const nameFromParam = params.get('deckName');
 
     if (urlFromParam) {
+// ...
         // --- NEW FLOW (User's Request) ---
         // 1. Capture the event
         posthog.capture('Deck Loaded');
