@@ -366,10 +366,9 @@ function startLesson() {
     showMainApp();
 }
 
-// --- *** MODIFIED FUNCTION *** ---
-// This function now intelligently checks for a "Title" row
-// and passes it to the `askForDeckName` modal.
-async function loadCardData(url, deckName = null) {
+// --- *** MODIFIED FUNCTION (1 of 3) *** ---
+// Now accepts a third argument, 'nameFromParam', from the URL.
+async function loadCardData(url, deckName = null, nameFromParam = null) {
     // Show loading state
     populateCard(cardA, { english: 'Loading...', portuguese: '' });
     populateCard(cardB, null);
@@ -395,44 +394,22 @@ async function loadCardData(url, deckName = null) {
         const tsvText = await response.text();
         const rows = tsvText.trim().split('\n');
 
-        // --- NEW LOGIC: Detect Title, Header, and Data ---
-        let dataRows;
-        let suggestedName = "My Deck"; // Default fallback
-        const headerKeywords = ['english', 'portugues', 'french', 'front', 'frente', 'back', 'verso', 'term'];
+        // --- *** MODIFIED FUNCTION (2 of 3) *** ---
+        //
+        // This logic is now greatly simplified based on your new instructions.
+        
+        // 1. Set the default name for the "Public Path"
+        const suggestedName = "My Deck";
         
         if (rows.length === 0 || (rows.length === 1 && rows[0] === "")) {
              throw new Error("Sheet is empty.");
         }
 
-        // Check row 0
-        const row0_lower = rows[0].toLowerCase();
-        const row0_isHeader = headerKeywords.some(kw => row0_lower.includes(kw));
-
-        // Check row 1 (if it exists)
-        let row1_isHeader = false;
-        if (rows.length > 1) {
-            const row1_lower = rows[1].toLowerCase();
-            row1_isHeader = headerKeywords.some(kw => row1_lower.includes(kw));
-        }
-
-        // --- MODIFIED LOGIC (V3) ---
-        if (row0_isHeader) {
-            // Case 1: Header in Row 0. No title row.
-            dataRows = rows.slice(1);
-            // suggestedName remains "My Deck"
-        } else if (row1_isHeader) {
-            // Case 2: Title in Row 0, Header in Row 1.
-            // This is the structure for "Restaurant Survival Portuguese"
-            dataRows = rows.slice(2); // Data starts after header
-            suggestedName = rows[0].split('\t')[0].trim() || "My Deck"; // Get title from A1
-        } else {
-            // Case 3: No headers found.
-            // Assume Title is in Row 0, and data starts in Row 1.
-            // This handles the "Common Restaurant Dialogue" sheet.
-            suggestedName = rows[0].split('\t')[0].trim() || "My Deck";
-            dataRows = rows.slice(1); // Data starts at Row 1
-        }
-        // --- END: MODIFIED LOGIC (V3) ---
+        // 2. Remove ALL header detection logic.
+        //    We now *always* skip Row 1 (index 0) as per your instruction.
+        const dataRows = rows.slice(1);
+        
+        // --- END OF SIMPLIFIED LOGIC ---
 
         // Process data rows
         fullDeck = dataRows.map(row => {
@@ -441,15 +418,21 @@ async function loadCardData(url, deckName = null) {
         }).filter(card => card && card.english && card.portuguese);
 
         if (fullDeck.length === 0) {
-            throw new Error("No valid flashcards found in the sheet.");
+            throw new Error("No valid flashcards found in the sheet. (Note: Row 1 is always skipped)");
         }
 
+        // --- *** MODIFIED FUNCTION (3 of 3) *** ---
+        // This is the "Dual Path" logic.
+        // PRIORITY 1: The name from the URL param (for premium users).
+        // PRIORITY 2: The "My Deck" default (for public users).
+        const finalSuggestedName = nameFromParam || suggestedName;
+        
         // --- MODIFIED LOGIC: Ask for name ---
         let nameToSave = deckName;
         if (!nameToSave) { // Only ask if it's a new deck (not from 'Recent')
             try {
-                // Pass our new 'suggestedName' to the modal
-                nameToSave = await askForDeckName(suggestedName); 
+                // Pass our new *prioritized* 'finalSuggestedName' to the modal
+                nameToSave = await askForDeckName(finalSuggestedName); 
             } catch (error) {
                 // User cancelled the modal
                 showSetupScreen();
@@ -488,6 +471,9 @@ function init() {
     // This allows the redirect from the email to pre-load a deck.
     const params = new URLSearchParams(window.location.search);
     const urlFromParam = params.get('sheetUrl');
+    
+    // --- MODIFIED: Get the new 'deckName' parameter. It will be null if not present. ---
+    const nameFromParam = params.get('deckName');
 
     if (urlFromParam) {
         // --- NEW FLOW (User's Request) ---
@@ -497,9 +483,9 @@ function init() {
         localStorage.setItem('spreadsheetUrl', urlFromParam);
         // 3. Clean the browser's URL bar
         window.history.replaceState(null, '', window.location.pathname);
-        // 4. Load the card data directly. This will show the loading screen
-        //    and then the pre-filled naming modal.
-        loadCardData(urlFromParam);
+        // 4. Load the card data directly.
+        //    We now pass the 'nameFromParam' (which may be null) to loadCardData.
+        loadCardData(urlFromParam, null, nameFromParam);
 
     } else {
         // --- ORIGINAL FLOW (No URL param) ---
@@ -525,7 +511,8 @@ const handleDeckLoad = () => {
     if (url) {
         posthog.capture('Deck Loaded');
         localStorage.setItem('spreadsheetUrl', url);
-        loadCardData(url); // We no longer pass a name, 'loadCardData' will figure it out
+        // --- MODIFIED: We pass null for nameFromParam to trigger the "Public Path" ---
+        loadCardData(url, null, null); 
         urlInput.value = '';
     }
 };
@@ -610,7 +597,7 @@ function askForDeckName(suggestedName = 'My Deck') {
             }
         };
 
-        // Use .once = true for event listeners to avoid stacking if modal is buggy
+        // Use .once = true for event listeners to avoid stacking if buggy
         confirmDeckNameBtn.addEventListener('click', onConfirm);
         cancelDeckNameBtn.addEventListener('click', onCancel);
         deckNameInput.addEventListener('keydown', onKeydown);
@@ -653,7 +640,7 @@ recentDecksContainer.addEventListener('click', (event) => {
 });
 
 // --- TUTORIAL MODAL LOGIC ---
-const tutorialImages = ['assets/tutorial-1.jpg', 'assets.../tutorial-2.jpg', 'assets/tutorial-3.jpg', 'assets/tutorial-4.jpg', 'assets/tutorial-5.jpg'];
+const tutorialImages = ['assets/tutorial-1.jpg', 'assets.../tutorial-2.jpg', 'assets/tutorial-3.jpg', 'assets/tutorial-4.jpg', 'assetsS/tutorial-5.jpg'];
 let currentSlideIndex = 0;
 
 function showSlide(index) {
