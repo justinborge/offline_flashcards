@@ -485,20 +485,32 @@ function init() {
     const urlFromParam = params.get('sheetUrl');
 
     if (urlFromParam) {
-        // --- MODIFIED FLOW ---
-        // 1. Set the input's value
-        urlInput.value = urlFromParam;
-        
-        // 2. Clean the URL in the browser bar
+        // --- NEW FLOW (User's Request) ---
+        // 1. Capture the event
+        posthog.capture('Deck Loaded');
+        // 2. Save this as the new "last used" URL
+        localStorage.setItem('spreadsheetUrl', urlFromParam);
+        // 3. Clean the browser's URL bar
         window.history.replaceState(null, '', window.location.pathname);
-        
-        // 3. Show the setup screen
-        // This stops the auto-load and lets the user click "Load Deck"
-        renderRecentDecks();
-        showSetupScreen();
+        // 4. Load the card data directly. This will show the loading screen
+        //    and then the pre-filled naming modal.
+        loadCardData(urlFromParam);
 
     } else {
-        showSetupScreen();
+        // --- ORIGINAL FLOW (No URL param) ---
+        // 1. Render the recent decks (in case we show setup screen)
+        renderRecentDecks();
+        // 2. Check if we have a saved URL in localStorage
+        const savedUrl = localStorage.getItem('spreadsheetUrl');
+        if (savedUrl) {
+            // Load the last-used deck
+            const recentDecks = getRecentDecks();
+            const savedDeck = recentDecks.find(deck => deck.url === savedUrl);
+            loadCardData(savedUrl, savedDeck ? savedDeck.name : null);
+        } else {
+            // No saved URL, show the homepage
+            showSetupScreen();
+        }
     }
 }
 
