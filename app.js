@@ -411,23 +411,23 @@ async function loadCardData(url, deckName = null) {
             row1_isHeader = headerKeywords.some(kw => row1_lower.includes(kw));
         }
 
-        // --- MODIFIED LOGIC ---
+        // --- MODIFIED LOGIC (V3) ---
         if (row0_isHeader) {
-            // Case 1: Header in Row 0.
+            // Case 1: Header in Row 0. No title row.
             dataRows = rows.slice(1);
             // suggestedName remains "My Deck"
         } else if (row1_isHeader) {
             // Case 2: Title in Row 0, Header in Row 1.
-            dataRows = rows.slice(2);
+            dataRows = rows.slice(2); // Data starts after header
             suggestedName = rows[0].split('\t')[0].trim() || "My Deck"; // Get title from A1
         } else {
             // Case 3: No headers found.
-            // Assume data starts at Row 0, AND use A1 as suggested name.
-            // This handles the sheet from your screenshot.
-            dataRows = rows;
+            // Assume Title is in Row 0, and data starts in Row 1.
+            // This is the most likely case for simple, no-header sheets.
             suggestedName = rows[0].split('\t')[0].trim() || "My Deck";
+            dataRows = rows.slice(1); // Data starts at Row 1
         }
-        // --- END: MODIFIED LOGIC ---
+        // --- END: MODIFIED LOGIC (V3) ---
 
         // Process data rows
         fullDeck = dataRows.map(row => {
@@ -477,12 +477,26 @@ function init() {
     if (identifiedUserEmail) {
         posthog.identify(identifiedUserEmail);
     }
-    renderRecentDecks();
-    const savedUrl = localStorage.getItem('spreadsheetUrl');
-    if (savedUrl) {
-        const recentDecks = getRecentDecks();
-        const savedDeck = recentDecks.find(deck => deck.url === savedUrl);
-        loadCardData(savedUrl, savedDeck ? savedDeck.name : null);
+    
+    // --- NEW: Check for URL Parameter ---
+    // We check for a 'sheetUrl' parameter in the URL *first*.
+    // This allows the redirect from the email to pre-load a deck.
+    const params = new URLSearchParams(window.location.search);
+    const urlFromParam = params.get('sheetUrl');
+
+    if (urlFromParam) {
+        // --- MODIFIED FLOW ---
+        // 1. Set the input's value
+        urlInput.value = urlFromParam;
+        
+        // 2. Clean the URL in the browser bar
+        window.history.replaceState(null, '', window.location.pathname);
+        
+        // 3. Show the setup screen
+        // This stops the auto-load and lets the user click "Load Deck"
+        renderRecentDecks();
+        showSetupScreen();
+
     } else {
         showSetupScreen();
     }
