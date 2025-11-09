@@ -383,8 +383,12 @@ async function loadCardData(url, deckName = null) {
     const tsvUrl = transformGoogleSheetUrl(url);
 
     try {
-        // Fetch and parse TSV data
-        const response = await fetch(tsvUrl);
+        // --- *** THE FIX *** ---
+        // We now force a network fetch, bypassing the cache.
+        // This is the same behavior as the 'Sync' button.
+        const response = await fetch(tsvUrl, { cache: 'reload' });
+        // --- *** END OF FIX *** ---
+
         if (!response.ok) {
             throw new Error(`Network response was not ok: ${response.statusText}`);
         }
@@ -418,12 +422,13 @@ async function loadCardData(url, deckName = null) {
             // suggestedName remains "My Deck"
         } else if (row1_isHeader) {
             // Case 2: Title in Row 0, Header in Row 1.
+            // This is the structure for "Restaurant Survival Portuguese"
             dataRows = rows.slice(2); // Data starts after header
             suggestedName = rows[0].split('\t')[0].trim() || "My Deck"; // Get title from A1
         } else {
             // Case 3: No headers found.
             // Assume Title is in Row 0, and data starts in Row 1.
-            // This is the most likely case for simple, no-header sheets.
+            // This handles the "Common Restaurant Dialogue" sheet.
             suggestedName = rows[0].split('\t')[0].trim() || "My Deck";
             dataRows = rows.slice(1); // Data starts at Row 1
         }
@@ -648,7 +653,7 @@ recentDecksContainer.addEventListener('click', (event) => {
 });
 
 // --- TUTORIAL MODAL LOGIC ---
-const tutorialImages = ['assets/tutorial-1.jpg', 'assets/tutorial-2.jpg', 'assets/tutorial-3.jpg', 'assets/tutorial-4.jpg', 'assets/tutorial-5.jpg'];
+const tutorialImages = ['assets/tutorial-1.jpg', 'assets.../tutorial-2.jpg', 'assets/tutorial-3.jpg', 'assets/tutorial-4.jpg', 'assets/tutorial-5.jpg'];
 let currentSlideIndex = 0;
 
 function showSlide(index) {
