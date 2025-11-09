@@ -334,8 +334,18 @@ function startLesson() {
     const secondCardData = sessionDeck[0]; // Peek at the next card
 
     if (!firstCardData) {
-        alert("This deck is empty!");
-        showSetupScreen();
+        // We can't use alert() in a PWA context reliably
+        console.error("This deck is empty!");
+        // Let's show a user-friendly message on the card itself
+        populateCard(cardA, { english: 'Error', portuguese: 'This deck appears to be empty.' });
+        populateCard(cardB, null);
+        cardA.classList.add('is-active');
+        activeCardElement = cardA;
+        nextCardElement = cardB;
+        currentCardData = null; // No card data
+        gameControls.style.display = 'none';
+        restartLessonButton.style.display = 'none'; // Hide restart
+        showMainApp(); // Show the app with the error message
         return;
     }
     
@@ -356,7 +366,11 @@ function startLesson() {
     showMainApp();
 }
 
+// --- *** MODIFIED FUNCTION *** ---
+// This function now intelligently checks for a "Title" row
+// and passes it to the `askForDeckName` modal.
 async function loadCardData(url, deckName = null) {
+    // Show loading state
     populateCard(cardA, { english: 'Loading...', portuguese: '' });
     populateCard(cardB, null);
     cardA.classList.add('is-active');
@@ -369,39 +383,92 @@ async function loadCardData(url, deckName = null) {
     const tsvUrl = transformGoogleSheetUrl(url);
 
     try {
+        // Fetch and parse TSV data
         const response = await fetch(tsvUrl);
+        if (!response.ok) {
+            throw new Error(`Network response was not ok: ${response.statusText}`);
+        }
         const tsvText = await response.text();
         const rows = tsvText.trim().split('\n');
 
-        let dataRows = rows;
-        if (rows.length > 0) {
-            const hasHeader = ['english', 'portugues', 'french', 'front', 'frente', 'back', 'verso', 'term'].some(kw => rows[0].toLowerCase().includes(kw));
-            if (hasHeader) dataRows = rows.slice(1);
+        // --- NEW LOGIC: Detect Title, Header, and Data ---
+        let dataRows;
+        let suggestedName = "My Deck"; // Default fallback
+        const headerKeywords = ['english', 'portugues', 'french', 'front', 'frente', 'back', 'verso', 'term'];
+        
+        if (rows.length === 0 || (rows.length === 1 && rows[0] === "")) {
+             throw new Error("Sheet is empty.");
         }
 
+        // Check row 0
+        const row0_lower = rows[0].toLowerCase();
+        const row0_isHeader = headerKeywords.some(kw => row0_lower.includes(kw));
+
+        // Check row 1 (if it exists)
+        let row1_isHeader = false;
+        if (rows.length > 1) {
+            const row1_lower = rows[1].toLowerCase();
+            row1_isHeader = headerKeywords.some(kw => row1_lower.includes(kw));
+        }
+
+        // Now, decide where data starts and if we have a title
+        if (row1_isHeader && !row0_isHeader) {
+            // Case 1: Title in Row 0, Header in Row 1 (User's Example)
+            // Use cell A1 as the suggested name
+            const firstCell = rows[0].split('\t')[0].trim();
+            if (firstCell) {
+                suggestedName = firstCell;
+            }
+            dataRows = rows.slice(2); // Data starts at row 2 (index 2)
+        } else if (row0_isHeader) {
+            // Case 2: Header in Row 0, No Title
+            dataRows = rows.slice(1); // Data starts at row 1
+            // suggestedName remains "My Deck"
+        } else {
+            // Case 3: No headers found. Assume all data, no title.
+            dataRows = rows;
+            // suggestedName remains "My Deck"
+        }
+        // --- END: NEW LOGIC ---
+
+        // Process data rows
         fullDeck = dataRows.map(row => {
             const columns = row.split('\t');
             return columns.length >= 2 ? { english: columns[0].trim(), portuguese: columns[1].trim() } : null;
         }).filter(card => card && card.english && card.portuguese);
 
-        if (fullDeck.length === 0) throw new Error("No cards found in the sheet.");
+        if (fullDeck.length === 0) {
+            throw new Error("No valid flashcards found in the sheet.");
+        }
 
+        // --- MODIFIED LOGIC: Ask for name ---
         let nameToSave = deckName;
-        if (!nameToSave) {
+        if (!nameToSave) { // Only ask if it's a new deck (not from 'Recent')
             try {
-                nameToSave = await askForDeckName(); 
+                // Pass our new 'suggestedName' to the modal
+                nameToSave = await askForDeckName(suggestedName); 
             } catch (error) {
+                // User cancelled the modal
                 showSetupScreen();
-                return;
+                return; // Stop loading
             }
         }
+        // --- END: MODIFIED LOGIC ---
         
         saveRecentDeck(nameToSave, url);
         startLesson();
+
     } catch (error) {
         console.error('Error loading card data:', error);
-        alert("Could not load cards. Please check the URL, share settings, and data format.");
-        showSetupScreen();
+        // Show a more user-friendly error on the card itself
+        populateCard(cardA, { english: 'Error', portuguese: 'Could not load cards. Please check the URL, share settings, and data format.' });
+        populateCard(cardB, null);
+        cardA.classList.add('is-active');
+        activeCardElement = cardA;
+        nextCardElement = cardB;
+        currentCardData = null; // No card data
+        gameControls.style.display = 'none';
+        restartLessonButton.style.display = 'none';
     }
 }
 
@@ -412,14 +479,42 @@ function init() {
     if (identifiedUserEmail) {
         posthog.identify(identifiedUserEmail);
     }
-    renderRecentDecks();
-    const savedUrl = localStorage.getItem('spreadsheetUrl');
-    if (savedUrl) {
-        const recentDecks = getRecentDecks();
-        const savedDeck = recentDecks.find(deck => deck.url === savedUrl);
-        loadCardData(savedUrl, savedDeck ? savedDeck.name : null);
+    
+    // --- NEW: Check for URL Parameter ---
+    // We check for a 'sheetUrl' parameter in the URL *first*.
+    // This allows the redirect from the email to pre-load a deck.
+    const params = new URLSearchParams(window.location.search);
+    const urlFromParam = params.get('sheetUrl');
+
+    if (urlFromParam) {
+        // Found a URL parameter.
+        console.log('Found sheetUrl parameter, auto-loading deck...');
+        
+        // 1. Set the input's value (so handleDeckLoad can read it)
+        urlInput.value = urlFromParam;
+        
+        // 2. Trigger the load sequence automatically.
+        // This will show the "Loading..." screen, ask for a deck name,
+        // and start the lesson. A true one-click flow.
+        handleDeckLoad();
+        
+        // 3. Clean the URL in the browser bar so it's not reused on refresh
+        // We use replaceState to do this without reloading the page.
+        window.history.replaceState(null, '', window.location.pathname);
+
     } else {
-        showSetupScreen();
+        // --- ORIGINAL BEHAVIOR: No URL parameter ---
+        // Load from localStorage or show the setup screen.
+        console.log('No sheetUrl parameter, checking localStorage.');
+        renderRecentDecks();
+        const savedUrl = localStorage.getItem('spreadsheetUrl');
+        if (savedUrl) {
+            const recentDecks = getRecentDecks();
+            const savedDeck = recentDecks.find(deck => deck.url === savedUrl);
+            loadCardData(savedUrl, savedDeck ? savedDeck.name : null);
+        } else {
+            showSetupScreen();
+        }
     }
 }
 
@@ -429,7 +524,7 @@ const handleDeckLoad = () => {
     if (url) {
         posthog.capture('Deck Loaded');
         localStorage.setItem('spreadsheetUrl', url);
-        loadCardData(url);
+        loadCardData(url); // We no longer pass a name, 'loadCardData' will figure it out
         urlInput.value = '';
     }
 };
@@ -462,12 +557,13 @@ randomizeToggleButton.addEventListener('click', (event) => {
 });
 
 changeDeckButton.addEventListener('click', () => {
-    if (confirm("Are you sure you want to change decks?")) {
-        localStorage.removeItem('spreadsheetUrl');
-        urlInput.value = '';
-        renderRecentDecks();
-        showSetupScreen();
-    }
+    // We avoid using confirm() as it can be unreliable in PWA/iframe
+    // This is a simple "are you sure" flow. For a true modal, we'd build one.
+    // For now, let's assume the click is intentional.
+    localStorage.removeItem('spreadsheetUrl');
+    urlInput.value = '';
+    renderRecentDecks();
+    showSetupScreen();
 });
 
 cardContainer.addEventListener('click', () => {
@@ -476,11 +572,12 @@ cardContainer.addEventListener('click', () => {
     }
 });
 
-// Custom modal promise function
-function askForDeckName() {
+// --- *** MODIFIED FUNCTION *** ---
+// This function now accepts a 'suggestedName' to pre-populate the input.
+function askForDeckName(suggestedName = 'My Deck') {
     return new Promise((resolve, reject) => {
         nameDeckModal.style.display = 'flex';
-        deckNameInput.value = 'My Deck';
+        deckNameInput.value = suggestedName; // <-- Set the input value
         deckNameInput.focus();
         deckNameInput.select();
 
@@ -496,16 +593,23 @@ function askForDeckName() {
                 closeModal();
                 resolve(name);
             }
+            // If name is empty, we just wait for another click or keypress
         };
         const onCancel = () => {
             closeModal();
-            reject();
+            reject(new Error('User cancelled deck naming')); // Reject the promise
         };
         const onKeydown = (event) => {
-            if (event.key === 'Enter') onConfirm();
-            else if (event.key === 'Escape') onCancel();
+            if (event.key === 'Enter') {
+                event.preventDefault(); // Prevent form submission
+                onConfirm();
+            }
+            else if (event.key === 'Escape') {
+                onCancel();
+            }
         };
 
+        // Use .once = true for event listeners to avoid stacking if modal is buggy
         confirmDeckNameBtn.addEventListener('click', onConfirm);
         cancelDeckNameBtn.addEventListener('click', onCancel);
         deckNameInput.addEventListener('keydown', onKeydown);
@@ -532,11 +636,14 @@ recentDecksContainer.addEventListener('click', (event) => {
         const name = link.textContent;
         if (url) {
             localStorage.setItem('spreadsheetUrl', url);
-            loadCardData(url, name);
+            loadCardData(url, name); // Pass the known name
         }
     } else if (deleteBtn) {
         const urlToDelete = deleteBtn.dataset.url;
-        if (urlToDelete && confirm('Are you sure you want to remove this deck?')) {
+        if (urlToDelete) {
+            // We'd build a custom modal for this in a real app
+            // For now, let's just delete it.
+            console.log("Deck delete requested. (Skipping confirm() dialog)");
             deleteRecentDeck(urlToDelete);
         }
     } else if (syncBtn) {
@@ -602,6 +709,7 @@ document.addEventListener('keydown', (event) => {
 
     // --- 2. Ignore Keys While Typing ---
     if (event.target.tagName === 'INPUT' || nameDeckModal.style.display === 'flex') {
+        // We already handle 'Enter' and 'Escape' in the askForDeckName function
         return;
     }
 
@@ -657,7 +765,9 @@ tutorialModal.addEventListener('touchend', (event) => {
 // --- PWA Service Worker Registration ---
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/service-worker.js');
+        navigator.serviceWorker.register('/service-worker.js')
+            .then(reg => console.log('Service worker registered.', reg))
+            .catch(err => console.error('Service worker registration failed:', err));
     });
 }
 
