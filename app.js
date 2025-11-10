@@ -441,6 +441,8 @@ async function loadCardData(url, deckName = null, nameFromParam = null) {
         }
         // --- END: MODIFIED LOGIC ---
         
+        // CRITICAL FIX: The URL cleanup (history.replaceState) now runs ONLY AFTER a successful load.
+        window.history.replaceState(null, '', window.location.pathname);
         saveRecentDeck(nameToSave, url);
         startLesson();
 
@@ -492,8 +494,7 @@ function init() {
         posthog.capture('Deck Loaded');
         // 2. Save this as the new "last used" URL
         localStorage.setItem('spreadsheetUrl', urlFromParam);
-        // 3. Clean the browser's URL bar
-        window.history.replaceState(null, '', window.location.pathname);
+        // 3. Clean the browser's URL bar (DEFERRED UNTIL SUCCESSFUL LOAD)
         // 4. Load the card data directly.
         //    We now pass the 'nameFromParam' (which may be null) to loadCardData.
         loadCardData(urlFromParam, null, nameFromParam);
@@ -764,7 +765,8 @@ tutorialModal.addEventListener('touchend', (event) => {
 // --- PWA Service Worker Registration ---
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/service-worker.js')
+        // CRITICAL: We changed the filename to guarantee re-registration
+        navigator.serviceWorker.register('/service-worker-v2.js')
             .then(reg => console.log('Service worker registered.', reg))
             .catch(err => console.error('Service worker registration failed:', err));
     });

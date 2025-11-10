@@ -1,5 +1,5 @@
-const APP_CACHE_NAME = 'portugues-flashcards-app-v1';
-const DATA_CACHE_NAME = 'portugues-flashcards-data-v1';
+const APP_CACHE_NAME = 'portugues-flashcards-app-v2-network';
+const DATA_CACHE_NAME = 'portugues-flashcards-data-v2';
 
 const APP_SHELL_URLS = [
   '/',
@@ -56,11 +56,20 @@ self.addEventListener('fetch', (event) => {
       })
     );
   } 
-  // Strategy for App Shell files: Cache-First
+  // Strategy for App Shell files: Network-First
   else {
     event.respondWith(
-      caches.match(event.request).then((response) => {
-        return response || fetch(event.request);
+      fetch(event.request).then((networkResponse) => {
+        // Only cache a successful response
+        if (networkResponse.ok) {
+            caches.open(APP_CACHE_NAME).then(cache => {
+                cache.put(event.request, networkResponse.clone());
+            });
+        }
+        return networkResponse;
+      }).catch(() => {
+        // If network fails, fall back to cache
+        return caches.match(event.request);
       })
     );
   }
