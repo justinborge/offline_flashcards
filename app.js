@@ -1,3 +1,4 @@
+(function() {
 // --- DOM ELEMENTS ---
 const setupScreen = document.getElementById('setup-screen');
 const mainApp = document.getElementById('main-app');
@@ -790,6 +791,5 @@ if ('serviceWorker' in navigator) {
             .catch(err => console.error('Service worker registration failed:', err));
     });
 }
-
-// --- START THE APP ---
-init();
+// --- END THE APP WRAPPER ---
+})();
