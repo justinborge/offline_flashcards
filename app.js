@@ -493,6 +493,8 @@ function init() {
     const nameFromParam = params.get('deckName');
 
     if (urlFromParam) {
+        console.log('DEBUG: URL PARAMETER DETECTED! URL:', urlFromParam, 'Name:', nameFromParam);
+// ...
 // ...
         // --- NEW FLOW (User's Request) ---
         // 1. Capture the event
@@ -521,6 +523,8 @@ function init() {
         renderRecentDecks();
         // 2. Check if we have a saved URL in localStorage
         const savedUrl = localStorage.getItem('spreadsheetUrl');
+        console.log('DEBUG: No URL parameter. Checking localStorage.');
+        // 2. Check if we have a saved URL in localStorage
         if (savedUrl) {
             // Load the last-used deck
             const recentDecks = getRecentDecks();
