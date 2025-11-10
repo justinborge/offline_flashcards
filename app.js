@@ -379,6 +379,7 @@ function startLesson() {
 // --- *** MODIFIED FUNCTION (1 of 3) *** ---
 // Now accepts a third argument, 'nameFromParam', from the URL.
 async function loadCardData(url, deckName = null, nameFromParam = null) {
+    const urlFromParam = new URLSearchParams(window.location.search).get('sheetUrl');
     // Show loading state
     populateCard(cardA, { english: 'Loading...', portuguese: '' });
     populateCard(cardB, null);
@@ -453,13 +454,6 @@ async function loadCardData(url, deckName = null, nameFromParam = null) {
         
         saveRecentDeck(nameToSave, url);
         startLesson();
-        
-        // --- NEWLY ADDED BLOCK: Clean the URL only AFTER successful load and naming ---
-        // We put this here to ensure mobile browsers don't interrupt loading the PWA.
-        if (urlFromParam) { 
-            window.history.replaceState(null, '', window.location.pathname);
-        }
-        // --- END NEWLY ADDED BLOCK ---
 
     } catch (error) {
         console.error('Error loading card data:', error);
@@ -526,6 +520,8 @@ function init() {
         // Pass existingName (if found) or null (if new) as the second argument.
         // nameFromParam (third argument) still serves as the pre-filled suggestion.
         loadCardData(urlFromParam, existingName, nameFromParam);
+        // After successful load, clean the URL bar to prevent issues on subsequent manual refreshes.
+        window.history.replaceState(null, '', window.location.pathname);
 
     } else {
         // --- ORIGINAL FLOW (No URL param) ---
