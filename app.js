@@ -495,8 +495,19 @@ function init() {
         // 3. Clean the browser's URL bar
         window.history.replaceState(null, '', window.location.pathname);
         // 4. Load the card data directly.
-        //    We now pass the 'nameFromParam' (which may be null) to loadCardData.
-        loadCardData(urlFromParam, null, nameFromParam);
+        // --- NEW: Check if the deck is already saved to skip the naming modal ---
+        const recentDecks = getRecentDecks();
+        const existingDeck = recentDecks.find(deck => deck.url === urlFromParam);
+        
+        let existingName = null;
+        if (existingDeck) {
+            console.log(`Found existing deck name: ${existingDeck.name}. Skipping modal.`);
+            existingName = existingDeck.name;
+        }
+
+        // Pass existingName (if found) or null (if new) as the second argument.
+        // nameFromParam (third argument) still serves as the pre-filled suggestion.
+        loadCardData(urlFromParam, existingName, nameFromParam);
 
     } else {
         // --- ORIGINAL FLOW (No URL param) ---
