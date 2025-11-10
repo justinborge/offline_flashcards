@@ -379,7 +379,6 @@ function startLesson() {
 // --- *** MODIFIED FUNCTION (1 of 3) *** ---
 // Now accepts a third argument, 'nameFromParam', from the URL.
 async function loadCardData(url, deckName = null, nameFromParam = null) {
-    const urlFromParam = new URLSearchParams(window.location.search).get('sheetUrl');
     // Show loading state
     populateCard(cardA, { english: 'Loading...', portuguese: '' });
     populateCard(cardB, null);
@@ -520,7 +519,8 @@ function init() {
         // Pass existingName (if found) or null (if new) as the second argument.
         // nameFromParam (third argument) still serves as the pre-filled suggestion.
         loadCardData(urlFromParam, existingName, nameFromParam);
-        // After successful load, clean the URL bar to prevent issues on subsequent manual refreshes.
+        
+        // Final cleanup for URL parameters after load is triggered.
         window.history.replaceState(null, '', window.location.pathname);
 
     } else {
