@@ -1,5 +1,5 @@
-const APP_CACHE_NAME = 'portugues-flashcards-app-v2'; // INCREMENTED VERSION
-const DATA_CACHE_NAME = 'portugues-flashcards-data-v2'; // INCREMENTED VERSION
+const APP_CACHE_NAME = 'portugues-flashcards-app-v1';
+const DATA_CACHE_NAME = 'portugues-flashcards-data-v1';
 
 const APP_SHELL_URLS = [
   '/',

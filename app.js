@@ -1,13 +1,3 @@
-(function() {
-    // --- POSTHOG INITIALIZATION (Moved from index.html to ensure execution order) ---
-    !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.async=!0,p.src=s.api_host+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="capture identify alias people.set people.set_once set_config register register_once unregister opt_out_capturing has_opted_out_capturing opt_in_capturing reset isFeatureEnabled onFeatureFlags getFeatureFlag getFeatureFlagPayload reloadFeatureFlags group updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures getActiveMatchingSurveys getSurveys onSessionId".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
-    posthog.init('phc_vY7ftv0KxVm2PCX6Z93J7AEUeVPunurYvX5IJBOtsXl', {
-        api_host: 'https://eu.i.posthog.com',
-        cross_subdomain_cookie: true,
-        person_profiles: 'identified_only',
-        session_recording: { enabled: true },
-    });
-    // --- END POSTHOG INITIALIZATION ---
 // --- DOM ELEMENTS ---
 const setupScreen = document.getElementById('setup-screen');
 const mainApp = document.getElementById('main-app');
@@ -496,32 +486,17 @@ function init() {
     const nameFromParam = params.get('deckName');
 
     if (urlFromParam) {
-        console.log('DEBUG: URL PARAMETER DETECTED! URL:', urlFromParam, 'Name:', nameFromParam);
-// ...
 // ...
         // --- NEW FLOW (User's Request) ---
         // 1. Capture the event
         posthog.capture('Deck Loaded');
         // 2. Save this as the new "last used" URL
         localStorage.setItem('spreadsheetUrl', urlFromParam);
-        // 3. Clean the browser's URL bar (MOVED TO loadCardData FUNCTION)
-        // 4. Load the card data directly.
-        // --- NEW: Check if the deck is already saved to skip the naming modal ---
-        const recentDecks = getRecentDecks();
-        const existingDeck = recentDecks.find(deck => deck.url === urlFromParam);
-        
-        let existingName = null;
-        if (existingDeck) {
-            console.log(`Found existing deck name: ${existingDeck.name}. Skipping modal.`);
-            existingName = existingDeck.name;
-        }
-
-        // Pass existingName (if found) or null (if new) as the second argument.
-        // nameFromParam (third argument) still serves as the pre-filled suggestion.
-        loadCardData(urlFromParam, existingName, nameFromParam);
-        
-        // Final cleanup for URL parameters after load is triggered.
+        // 3. Clean the browser's URL bar
         window.history.replaceState(null, '', window.location.pathname);
+        // 4. Load the card data directly.
+        //    We now pass the 'nameFromParam' (which may be null) to loadCardData.
+        loadCardData(urlFromParam, null, nameFromParam);
 
     } else {
         // --- ORIGINAL FLOW (No URL param) ---
@@ -529,8 +504,6 @@ function init() {
         renderRecentDecks();
         // 2. Check if we have a saved URL in localStorage
         const savedUrl = localStorage.getItem('spreadsheetUrl');
-        console.log('DEBUG: No URL parameter. Checking localStorage.');
-        // 2. Check if we have a saved URL in localStorage
         if (savedUrl) {
             // Load the last-used deck
             const recentDecks = getRecentDecks();
@@ -796,5 +769,6 @@ if ('serviceWorker' in navigator) {
             .catch(err => console.error('Service worker registration failed:', err));
     });
 }
-// --- END THE APP WRAPPER ---
-})();
+
+// --- START THE APP ---
+init();
