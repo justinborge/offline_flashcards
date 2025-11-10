@@ -443,6 +443,13 @@ async function loadCardData(url, deckName = null, nameFromParam = null) {
         
         saveRecentDeck(nameToSave, url);
         startLesson();
+        
+        // --- NEWLY ADDED BLOCK: Clean the URL only AFTER successful load and naming ---
+        // We put this here to ensure mobile browsers don't interrupt loading the PWA.
+        if (urlFromParam) { 
+            window.history.replaceState(null, '', window.location.pathname);
+        }
+        // --- END NEWLY ADDED BLOCK ---
 
     } catch (error) {
         console.error('Error loading card data:', error);
@@ -492,8 +499,7 @@ function init() {
         posthog.capture('Deck Loaded');
         // 2. Save this as the new "last used" URL
         localStorage.setItem('spreadsheetUrl', urlFromParam);
-        // 3. Clean the browser's URL bar
-        window.history.replaceState(null, '', window.location.pathname);
+        // 3. Clean the browser's URL bar (MOVED TO loadCardData FUNCTION)
         // 4. Load the card data directly.
         // --- NEW: Check if the deck is already saved to skip the naming modal ---
         const recentDecks = getRecentDecks();
